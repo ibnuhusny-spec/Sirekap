@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v7.5 - Validasi Ketat</title>
+    <title>SIREKAP v7.6 - SDIT Qurratu A'yun</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -32,12 +32,16 @@
         /* Login & Setup Overlay */
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
         .box { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .box h2 { color: var(--primary-dark); margin-bottom: 10px; }
-        .box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
         
+        /* Identitas Sekolah di Login */
+        .school-logo { width: 100px; height: auto; margin-bottom: 10px; }
+        .school-name { font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin: 0; line-height: 1.3; }
+        .school-location { font-size: 0.9rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 25px; font-weight: 500; }
+
         .role-btn { width: 100%; padding: 1rem; margin-bottom: 1rem; border: 2px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 1rem; color: var(--text-main); }
-        .role-btn:hover { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+        .role-btn:hover { border-color: var(--primary); background: #eff6ff; color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .role-btn.admin { border-color: var(--primary); color: var(--primary); }
+        .role-btn:active { transform: translateY(0); } /* Click effect */
         
         /* Header */
         header { background-color: var(--primary-dark); color: white; padding: 1rem 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
@@ -114,14 +118,17 @@
         .mode-selector { display: flex; gap: 1rem; }
         .mode-option { flex: 1; }
         .mode-option input { display: none; }
-        .mode-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); }
+        .mode-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); transition: 0.2s; }
         .mode-option input:checked + .mode-label.sendiri { background: var(--success-light); color: var(--success-text); border-color: var(--success); }
         .mode-option input:checked + .mode-label.berdua { background: var(--purple-light); color: var(--purple-text); border-color: var(--purple); }
 
-        .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 1rem; }
-        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+        /* Button Styles with Active State for Sound Feedback */
+        .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 1rem; transition: transform 0.1s; }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
 
-        .btn-excel { width: 100%; padding: 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1rem; text-decoration: none; }
+        .btn-excel { width: 100%; padding: 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1rem; text-decoration: none; transition: transform 0.1s; }
+        .btn-excel:active { transform: scale(0.98); }
         .btn-excel:hover { background: #15803d; }
 
         .loader { width: 20px; height: 20px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
@@ -142,7 +149,8 @@
         .master-item { padding: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .master-item:last-child { border-bottom: none; }
         .input-group { display: flex; gap: 8px; }
-        .btn-mini { padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: none; cursor: pointer; color: white; font-weight: 600; margin-left: 4px; }
+        .btn-mini { padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; border: none; cursor: pointer; color: white; font-weight: 600; margin-left: 4px; transition: transform 0.1s; }
+        .btn-mini:active { transform: scale(0.95); }
         
         /* Badges */
         .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
@@ -179,24 +187,36 @@
                 <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
             </div>
 
-            <button class="btn-submit" onclick="saveSettings()">Simpan & Lanjut</button>
-            <button onclick="cancelSetup()" style="margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer; font-size:0.9rem;">Batal</button>
+            <button class="btn-submit click-sound" onclick="saveSettings()">Simpan & Lanjut</button>
+            <button class="click-sound" onclick="cancelSetup()" style="margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer; font-size:0.9rem;">Batal</button>
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v7.5</h2>
-            <p>Pilih akses masuk:</p>
-            <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
-            <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
+            <!-- LOGO & IDENTITAS SEKOLAH -->
+            <div style="margin-bottom: 20px;">
+                <!-- Pastikan file logo.png ada di folder yang sama -->
+                <img src="logo.png" alt="Logo Sekolah" class="school-logo" onerror="this.style.display='none'">
+                <h1 class="school-name">SDIT Qurratu A'yun Al-Islami</h1>
+                <p class="school-location">Kabupaten Maros</p>
+            </div>
+
+            <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem;">Silakan pilih akses masuk:</p>
+            
+            <button class="role-btn click-sound" onclick="login('guru')">
+                <span>👨‍🏫 Masuk sebagai GURU</span>
+            </button>
+            <button class="role-btn admin click-sound" onclick="login('admin')">
+                <span>🔐 Masuk sebagai KEPALA SEKOLAH</span>
+            </button>
             
             <div id="password-area" class="hidden" style="margin-top: 15px; text-align: left;">
                 <label>Password Admin</label>
                 <input type="password" id="adminPass" style="margin-bottom: 10px;" placeholder="Masukkan password...">
-                <button class="btn-submit" onclick="checkAdmin()">Masuk Admin</button>
+                <button class="btn-submit click-sound" onclick="checkAdmin()">Masuk Admin</button>
             </div>
 
              <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                <button onclick="showSetup()" style="background:none; border:none; color:#64748b; font-size:0.85rem; cursor:pointer; text-decoration:underline; display:flex; align-items:center; justify-content:center; width:100%; gap:6px;">
+                <button class="click-sound" onclick="showSetup()" style="background:none; border:none; color:#64748b; font-size:0.85rem; cursor:pointer; text-decoration:underline; display:flex; align-items:center; justify-content:center; width:100%; gap:6px;">
                     ⚙️ Edit Koneksi Server
                 </button>
             </div>
@@ -213,14 +233,14 @@
             </div>
             <!-- Menu Admin -->
             <div class="nav-buttons hidden" id="admin-nav">
-                <button class="nav-btn active" onclick="switchView('dashboard')">Dashboard</button>
-                <button class="nav-btn" onclick="switchView('master')">Data Master</button>
-                <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
+                <button class="nav-btn active click-sound" onclick="switchView('dashboard')">Dashboard</button>
+                <button class="nav-btn click-sound" onclick="switchView('master')">Data Master</button>
+                <button class="nav-btn click-sound" style="background: #ef4444;" onclick="logout()">Keluar</button>
             </div>
             <!-- Menu Guru -->
             <div class="nav-buttons hidden" id="guru-nav">
                 <span style="color:white; font-weight:bold; padding:8px;">Mode Guru</span>
-                <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
+                <button class="nav-btn click-sound" style="background: #ef4444;" onclick="logout()">Keluar</button>
             </div>
         </div>
     </header>
@@ -229,12 +249,12 @@
         
         <!-- DASHBOARD (ADMIN ONLY) -->
         <div id="view-dashboard" class="hidden">
-            <a id="btn-open-sheet" href="#" target="_blank" class="btn-excel hidden">
+            <a id="btn-open-sheet" href="#" target="_blank" class="btn-excel hidden click-sound">
                 📂 Buka Database (Google Sheet)
             </a>
 
             <div class="card" style="text-align: right;">
-                <button class="nav-btn" style="background: #2563eb; color: white;" onclick="fetchCloudData()">🔄 Refresh Data Cloud</button>
+                <button class="nav-btn click-sound" style="background: #2563eb; color: white;" onclick="fetchCloudData()">🔄 Refresh Data Cloud</button>
             </div>
 
             <div class="stats-grid">
@@ -291,7 +311,7 @@
                         <h2>Kelola Data Master Sekolah</h2>
                         <p class="sync-status" id="master-sync-status">Status: Aman</p>
                     </div>
-                    <button class="btn-submit" style="width:auto; margin:0; background:#16a34a;" onclick="uploadMasterData()">
+                    <button class="btn-submit click-sound" style="width:auto; margin:0; background:#16a34a;" onclick="uploadMasterData()">
                         💾 Simpan Perubahan ke Cloud
                     </button>
                 </div>
@@ -302,7 +322,7 @@
                         <h3>👨‍🏫 Daftar Guru</h3>
                         <div class="input-group">
                             <input type="text" id="newTeacherInput" placeholder="Tambah Guru Baru...">
-                            <button class="btn-submit" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('teachers', 'newTeacherInput')">+</button>
+                            <button class="btn-submit click-sound" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('teachers', 'newTeacherInput')">+</button>
                         </div>
                         <ul class="master-list" id="master-teacher-list"></ul>
                     </div>
@@ -312,7 +332,7 @@
                         <h3>📚 Daftar Mata Pelajaran</h3>
                         <div class="input-group">
                             <input type="text" id="newSubjectInput" placeholder="Tambah Mapel Baru...">
-                            <button class="btn-submit" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('subjects', 'newSubjectInput')">+</button>
+                            <button class="btn-submit click-sound" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('subjects', 'newSubjectInput')">+</button>
                         </div>
                         <ul class="master-list" id="master-subject-list"></ul>
                     </div>
@@ -322,7 +342,7 @@
                         <h3>🏫 Daftar Kelas</h3>
                         <div class="input-group">
                             <input type="text" id="newClassInput" placeholder="Tambah Kelas Baru...">
-                            <button class="btn-submit" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('classes', 'newClassInput')">+</button>
+                            <button class="btn-submit click-sound" style="margin:0; width:auto; padding:0 15px;" onclick="addMasterItem('classes', 'newClassInput')">+</button>
                         </div>
                         <ul class="master-list" id="master-class-list"></ul>
                     </div>
@@ -336,8 +356,8 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <h2>Form Absensi Online</h2>
                     <div style="display:flex; gap:5px;">
-                        <button id="btn-update-guru" onclick="downloadMasterData(true)" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#334155; font-weight:600;">🔄 Update Nama</button>
-                        <button onclick="forceResetDefaults()" style="background:#fef2f2; border:1px solid #fee2e2; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#ef4444; font-weight:600;">⚠️ Reset</button>
+                        <button id="btn-update-guru" class="click-sound" onclick="downloadMasterData(true)" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#334155; font-weight:600;">🔄 Update Nama</button>
+                        <button class="click-sound" onclick="forceResetDefaults()" style="background:#fef2f2; border:1px solid #fee2e2; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#ef4444; font-weight:600;">⚠️ Reset</button>
                     </div>
                 </div>
                 <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Pilih data dari daftar. Anda tidak bisa mengetik bebas.</p>
@@ -393,11 +413,11 @@
                             <div class="mode-selector">
                                 <div class="mode-option">
                                     <input type="radio" name="type" id="t-sendiri" value="sendiri" checked>
-                                    <label for="t-sendiri" class="mode-label sendiri">👤 Sendiri</label>
+                                    <label for="t-sendiri" class="mode-label sendiri click-sound">👤 Sendiri</label>
                                 </div>
                                 <div class="mode-option">
                                     <input type="radio" name="type" id="t-berdua" value="berdua">
-                                    <label for="t-berdua" class="mode-label berdua">👥 Team</label>
+                                    <label for="t-berdua" class="mode-label berdua click-sound">👥 Team</label>
                                 </div>
                             </div>
                         </div>
@@ -409,7 +429,7 @@
                         </label>
                     </div>
 
-                    <button type="submit" id="btn-save" class="btn-submit">
+                    <button type="submit" id="btn-save" class="btn-submit click-sound">
                         <span id="btn-text">Kirim ke Cloud ☁️</span>
                         <span id="btn-loader" class="loader hidden"></span>
                     </button>
@@ -437,6 +457,29 @@
             classes: []
         };
 
+        // --- SOUND EFFECT ---
+        // Web Audio API Context
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playClick() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frequency in Hz
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Volume
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
         // --- INIT ---
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
@@ -461,6 +504,11 @@
             setupAutocomplete('teacherName', 'list-teacher', 'teachers');
             setupAutocomplete('subject', 'list-subject', 'subjects');
             setupAutocomplete('className', 'list-class', 'classes');
+
+            // Attach sound to buttons
+            document.querySelectorAll('.click-sound').forEach(btn => {
+                btn.addEventListener('click', playClick);
+            });
         });
 
         // --- CUSTOM DROPDOWN LOGIC ---
@@ -503,6 +551,7 @@
                 li.addEventListener('click', () => {
                     inputElement.value = item;
                     listElement.classList.remove('show');
+                    playClick(); // Sound on select
                 });
                 listElement.appendChild(li);
             });
@@ -615,9 +664,12 @@
                     container.innerHTML += `
                         <li class="master-item">
                             <span>${item}</span>
-                            <button class="btn-mini" style="background:#ef4444;" onclick="deleteMasterItem('${type}', ${index})">✕</button>
+                            <button class="btn-mini click-sound" style="background:#ef4444;" onclick="deleteMasterItem('${type}', ${index})">✕</button>
                         </li>`;
                 });
+                // Re-attach sound listeners for dynamic elements
+                document.querySelectorAll('.click-sound').forEach(btn => btn.removeEventListener('click', playClick));
+                document.querySelectorAll('.click-sound').forEach(btn => btn.addEventListener('click', playClick));
             };
             render(appData.teachers, 'teachers', 'master-teacher-list');
             render(appData.subjects, 'subjects', 'master-subject-list');
