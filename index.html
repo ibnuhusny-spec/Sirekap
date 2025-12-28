@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v7.3 - Final Fix</title>
+    <title>SIREKAP v7.4 - Fix Dropdown HP</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -27,10 +27,10 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 40px; }
+        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 60px; }
 
         /* Login & Setup Overlay */
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-dark); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
         .box { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .box h2 { color: var(--primary-dark); margin-bottom: 10px; }
         .box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
@@ -52,6 +52,7 @@
         .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 1.5rem; }
         
+        /* Stats & Table */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: white; border-radius: 12px; border: 1px solid var(--border); }
         .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
@@ -59,11 +60,56 @@
         .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
         .stat-label { font-size: 0.875rem; color: var(--text-muted); font-weight: 600; }
 
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        th { text-align: left; padding: 1rem; background: #f1f5f9; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+
+        /* --- CUSTOM AUTOCOMPLETE DROPDOWN STYLES --- */
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group { margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; position: relative; } /* Relative for dropdown positioning */
+        
         label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main); font-size: 0.9rem; }
         input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
         input:focus { border-color: var(--primary); ring: 2px solid #eff6ff; }
+
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--primary);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+        }
+        .autocomplete-list.show { display: block; }
+        
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+            color: #334155;
+        }
+        .autocomplete-item:hover, .autocomplete-item.active {
+            background-color: #eff6ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .autocomplete-empty {
+            padding: 12px 15px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* --- END CUSTOM DROPDOWN --- */
         
         .mode-selector { display: flex; gap: 1rem; }
         .mode-option { flex: 1; }
@@ -87,12 +133,6 @@
         .api-setup label { font-size: 0.85rem; color: #1e40af; }
         
         .hidden { display: none !important; }
-        
-        /* Table */
-        .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        th { text-align: left; padding: 1rem; background: #f1f5f9; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
-        td { padding: 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
         
         /* Master Data Styles */
         .master-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
@@ -144,7 +184,7 @@
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v7.3</h2>
+            <h2>SIREKAP v7.4</h2>
             <p>Pilih akses masuk:</p>
             <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
             <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
@@ -189,7 +229,6 @@
         
         <!-- DASHBOARD (ADMIN ONLY) -->
         <div id="view-dashboard" class="hidden">
-            <!-- Tombol Buka Spreadsheet -->
             <a id="btn-open-sheet" href="#" target="_blank" class="btn-excel hidden">
                 📂 Buka Database (Google Sheet)
             </a>
@@ -252,7 +291,6 @@
                         <h2>Kelola Data Master Sekolah</h2>
                         <p class="sync-status" id="master-sync-status">Status: Aman</p>
                     </div>
-                    <!-- Tombol Simpan ke Cloud -->
                     <button class="btn-submit" style="width:auto; margin:0; background:#16a34a;" onclick="uploadMasterData()">
                         💾 Simpan Perubahan ke Cloud
                     </button>
@@ -302,7 +340,7 @@
                         <button onclick="forceResetDefaults()" style="background:#fef2f2; border:1px solid #fee2e2; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#ef4444; font-weight:600;">⚠️ Reset</button>
                     </div>
                 </div>
-                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Klik "Update Nama" untuk ambil data terbaru dari Kepala Sekolah.</p>
+                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Ketuk kolom untuk memilih dari daftar.</p>
                 
                 <form onsubmit="handleFormSubmit(event)">
                     <div class="form-row">
@@ -316,28 +354,26 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <!-- CUSTOM DROPDOWN GURU -->
+                    <div class="form-group" id="group-teacher">
                         <label>Nama Guru</label>
-                        <input type="text" id="teacherName" list="teacherList" required placeholder="Ketik/Pilih Nama Guru..." autocomplete="off">
-                        <datalist id="teacherList">
-                            <!-- Populated by JS -->
-                        </datalist>
+                        <input type="text" id="teacherName" placeholder="Ketik atau Pilih Nama..." autocomplete="off" required>
+                        <ul class="autocomplete-list" id="list-teacher"></ul>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
+                        <!-- CUSTOM DROPDOWN MAPEL -->
+                        <div class="form-group" id="group-subject">
                             <label>Mata Pelajaran</label>
-                            <input type="text" id="subject" list="subjectList" required placeholder="Ketik/Pilih..." autocomplete="off">
-                             <datalist id="subjectList">
-                                <!-- Populated by JS -->
-                            </datalist>
+                            <input type="text" id="subject" placeholder="Ketik/Pilih..." autocomplete="off" required>
+                            <ul class="autocomplete-list" id="list-subject"></ul>
                         </div>
-                        <div class="form-group">
+                        
+                        <!-- CUSTOM DROPDOWN KELAS -->
+                        <div class="form-group" id="group-class">
                             <label>Kelas</label>
-                            <input type="text" id="className" list="classList" required placeholder="Ketik/Pilih..." autocomplete="off">
-                             <datalist id="classList">
-                                <!-- Populated by JS -->
-                            </datalist>
+                            <input type="text" id="className" placeholder="Ketik/Pilih..." autocomplete="off" required>
+                            <ul class="autocomplete-list" id="list-class"></ul>
                         </div>
                     </div>
 
@@ -384,12 +420,11 @@
         const ADMIN_PASS = "admin123";
         let currentUserRole = null;
 
-        // DATA MASTER DEFAULT (Untuk cadangan jika kosong)
+        // DATA MASTER DEFAULT
         const defaultTeachers = ["Budi Santoso", "Siti Aminah", "Ahmad Fauzi"];
         const defaultSubjects = ["Matematika", "B. Indonesia", "B. Inggris", "IPA", "IPS", "PPKn", "PJOK", "PAI", "Tahfidz"];
         const defaultClasses = ["1A Putra", "1B Putra", "1A Putri", "1B Putri", "7 Putra", "7 Putri"];
 
-        // DATA MASTER CONTAINER
         let appData = {
             teachers: [],
             subjects: [],
@@ -405,7 +440,7 @@
             if(API_URL) document.getElementById('apiUrl').value = API_URL;
             if(SHEET_URL) document.getElementById('sheetUrl').value = SHEET_URL;
 
-            // Load local backup or Defaults immediately!
+            // Load local backup or Defaults
             loadLocalMaster();
 
             if(API_URL) {
@@ -415,7 +450,57 @@
                 // Auto sync master data on load
                 downloadMasterData();
             }
+
+            // SETUP CUSTOM AUTOCOMPLETE HANDLERS
+            setupAutocomplete('teacherName', 'list-teacher', 'teachers');
+            setupAutocomplete('subject', 'list-subject', 'subjects');
+            setupAutocomplete('className', 'list-class', 'classes');
         });
+
+        // --- CUSTOM DROPDOWN LOGIC ---
+        function setupAutocomplete(inputId, listId, dataKey) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+
+            // 1. Show all on focus
+            input.addEventListener('focus', () => {
+                renderDropdown(list, appData[dataKey], input);
+                list.classList.add('show');
+            });
+
+            // 2. Filter on type
+            input.addEventListener('input', () => {
+                const query = input.value.toLowerCase();
+                const filtered = appData[dataKey].filter(item => item.toLowerCase().includes(query));
+                renderDropdown(list, filtered, input);
+                list.classList.add('show');
+            });
+
+            // 3. Hide on click outside (blur needs delay to allow click on item)
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !list.contains(e.target)) {
+                    list.classList.remove('show');
+                }
+            });
+        }
+
+        function renderDropdown(listElement, items, inputElement) {
+            listElement.innerHTML = '';
+            if (items.length === 0) {
+                listElement.innerHTML = '<li class="autocomplete-empty">Tidak ada data. Ketik untuk tambah baru.</li>';
+                return;
+            }
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'autocomplete-item';
+                li.textContent = item;
+                li.addEventListener('click', () => {
+                    inputElement.value = item;
+                    listElement.classList.remove('show');
+                });
+                listElement.appendChild(li);
+            });
+        }
 
         // --- MASTER DATA FUNCTIONS ---
         function loadLocalMaster() {
@@ -423,26 +508,23 @@
             const localS = JSON.parse(localStorage.getItem('master_subjects'));
             const localC = JSON.parse(localStorage.getItem('master_classes'));
 
-            // LOGIKA PENTING: Jika data lokal kosong, PAKAI DEFAULT agar dropdown tidak hilang
             appData.teachers = (localT && localT.length > 0) ? localT : defaultTeachers;
             appData.subjects = (localS && localS.length > 0) ? localS : defaultSubjects;
             appData.classes = (localC && localC.length > 0) ? localC : defaultClasses;
 
-            updateFormOptions();
-            renderMasterLists();
+            renderMasterLists(); // For Admin
         }
 
         function forceResetDefaults() {
-            if(confirm("Apakah Anda yakin ingin mereset daftar nama ke pengaturan awal? Data kustom lokal akan hilang.")) {
+            if(confirm("Reset data lokal ke default?")) {
                 appData.teachers = defaultTeachers;
                 appData.subjects = defaultSubjects;
                 appData.classes = defaultClasses;
                 localStorage.setItem('master_teachers', JSON.stringify(defaultTeachers));
                 localStorage.setItem('master_subjects', JSON.stringify(defaultSubjects));
                 localStorage.setItem('master_classes', JSON.stringify(defaultClasses));
-                updateFormOptions();
                 renderMasterLists();
-                alert("Data berhasil di-reset ke default.");
+                alert("Data Reset.");
             }
         }
 
@@ -469,7 +551,7 @@
                     document.getElementById('master-sync-status').textContent = "Status: Tersimpan & Sinkron";
                     document.getElementById('master-sync-status').classList.remove('unsaved');
                 } else {
-                    alert("Gagal simpan: " + JSON.stringify(data));
+                    alert("Gagal: " + JSON.stringify(data));
                 }
             })
             .catch(err => alert("Error upload"))
@@ -482,13 +564,13 @@
         // 2. DOWNLOAD (Guru & Admin)
         function downloadMasterData(verbose = false) {
             if(!API_URL) {
-                if(verbose) alert("Belum terkoneksi ke server. Masukkan URL Web App dulu.");
+                if(verbose) alert("Belum setup koneksi.");
                 return;
             }
             
             if(verbose) {
                 const btn = document.getElementById('btn-update-guru');
-                btn.textContent = "Mengambil data...";
+                btn.textContent = "...";
                 btn.disabled = true;
             }
 
@@ -496,41 +578,27 @@
             .then(res => res.json())
             .then(data => {
                 if(data.result === 'success') {
-                    // Update Local ONLY IF Server has data.
-                    if(data.teachers && data.teachers.length > 0) appData.teachers = data.teachers;
-                    if(data.subjects && data.subjects.length > 0) appData.subjects = data.subjects;
-                    if(data.classes && data.classes.length > 0) appData.classes = data.classes;
+                    if(data.teachers.length > 0) appData.teachers = data.teachers;
+                    if(data.subjects.length > 0) appData.subjects = data.subjects;
+                    if(data.classes.length > 0) appData.classes = data.classes;
                     
-                    // Save to LocalStorage
                     localStorage.setItem('master_teachers', JSON.stringify(appData.teachers));
                     localStorage.setItem('master_subjects', JSON.stringify(appData.subjects));
                     localStorage.setItem('master_classes', JSON.stringify(appData.classes));
                     
-                    updateFormOptions();
                     renderMasterLists();
                     
-                    if(verbose) alert("Berhasil! Data Guru/Mapel/Kelas sudah diperbarui dari Server.");
-                } else {
-                    if(verbose) alert("Server merespon, tapi data kosong (mungkin belum disetup oleh Kepala Sekolah).");
+                    if(verbose) alert("Data Terupdate!");
                 }
             })
-            .catch(err => {
-                console.log("Error fetching master data", err);
-                if(verbose) alert("Gagal mengambil data. Cek koneksi internet.");
-            })
+            .catch(err => console.log(err))
             .finally(() => {
                 if(verbose) {
                     const btn = document.getElementById('btn-update-guru');
-                    btn.textContent = "🔄 Update Nama Guru";
+                    btn.textContent = "🔄 Update Nama";
                     btn.disabled = false;
                 }
             });
-        }
-
-        function updateFormOptions() {
-            document.getElementById('teacherList').innerHTML = appData.teachers.map(t => `<option value="${t}">`).join('');
-            document.getElementById('subjectList').innerHTML = appData.subjects.map(s => `<option value="${s}">`).join('');
-            document.getElementById('classList').innerHTML = appData.classes.map(c => `<option value="${c}">`).join('');
         }
 
         function renderMasterLists() {
@@ -556,12 +624,10 @@
             if (val) {
                 appData[type].push(val);
                 appData[type].sort();
-                // Update local display immediately
                 renderMasterLists();
-                updateFormOptions();
                 input.value = '';
                 const status = document.getElementById('master-sync-status');
-                status.textContent = "⚠️ Ada perubahan BELUM DISIMPAN! Klik tombol hijau.";
+                status.textContent = "⚠️ Ada perubahan! Klik tombol hijau.";
                 status.classList.add('unsaved');
             }
         }
@@ -570,9 +636,8 @@
             if(confirm('Hapus data ini?')) {
                 appData[type].splice(index, 1);
                 renderMasterLists();
-                updateFormOptions();
                 const status = document.getElementById('master-sync-status');
-                status.textContent = "⚠️ Ada perubahan BELUM DISIMPAN! Klik tombol hijau.";
+                status.textContent = "⚠️ Ada perubahan! Klik tombol hijau.";
                 status.classList.add('unsaved');
             }
         }
@@ -581,18 +646,16 @@
         function saveSettings() {
             const url = document.getElementById('apiUrl').value.trim();
             const sUrl = document.getElementById('sheetUrl').value.trim();
-            
             if(url) {
                 localStorage.setItem('guru_api_url', url);
                 API_URL = url;
                 document.getElementById('connection-status').textContent = "🟢 Online Connected";
-                downloadMasterData(); // Fetch immediately
+                downloadMasterData();
             }
             if(sUrl) {
                 localStorage.setItem('guru_sheet_url', sUrl);
                 SHEET_URL = sUrl;
             }
-
             document.getElementById('setup-box').classList.add('hidden');
             document.getElementById('login-box').classList.remove('hidden');
         }
@@ -613,7 +676,7 @@
                 document.getElementById('overlay').classList.add('hidden');
                 document.getElementById('guru-nav').classList.remove('hidden');
                 switchView('form');
-                downloadMasterData(false); // Silent sync on login
+                downloadMasterData(false);
             } else {
                 document.getElementById('password-area').classList.remove('hidden');
             }
@@ -633,7 +696,7 @@
 
                 switchView('dashboard');
                 fetchCloudData();
-                downloadMasterData(false); // Admin syncs master too
+                downloadMasterData(false);
             } else {
                 alert("Password salah!");
             }
