@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v7.2 - Fix Dropdown</title>
+    <title>SIREKAP v7.3 - Final Fix</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -144,7 +144,7 @@
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v7.2</h2>
+            <h2>SIREKAP v7.3</h2>
             <p>Pilih akses masuk:</p>
             <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
             <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
@@ -297,9 +297,12 @@
             <div class="card" style="max-width: 600px; margin: 0 auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <h2>Form Absensi Online</h2>
-                    <button id="btn-update-guru" onclick="downloadMasterData(true)" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#334155; font-weight:600;">🔄 Update Nama Guru</button>
+                    <div style="display:flex; gap:5px;">
+                        <button id="btn-update-guru" onclick="downloadMasterData(true)" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#334155; font-weight:600;">🔄 Update Nama</button>
+                        <button onclick="forceResetDefaults()" style="background:#fef2f2; border:1px solid #fee2e2; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#ef4444; font-weight:600;">⚠️ Reset</button>
+                    </div>
                 </div>
-                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Klik "Update Nama Guru" jika nama Anda belum muncul.</p>
+                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Klik "Update Nama" untuk ambil data terbaru dari Kepala Sekolah.</p>
                 
                 <form onsubmit="handleFormSubmit(event)">
                     <div class="form-row">
@@ -381,7 +384,7 @@
         const ADMIN_PASS = "admin123";
         let currentUserRole = null;
 
-        // DATA MASTER DEFAULT (Jika Cloud Kosong)
+        // DATA MASTER DEFAULT (Untuk cadangan jika kosong)
         const defaultTeachers = ["Budi Santoso", "Siti Aminah", "Ahmad Fauzi"];
         const defaultSubjects = ["Matematika", "B. Indonesia", "B. Inggris", "IPA", "IPS", "PPKn", "PJOK", "PAI", "Tahfidz"];
         const defaultClasses = ["1A Putra", "1B Putra", "1A Putri", "1B Putri", "7 Putra", "7 Putri"];
@@ -414,19 +417,33 @@
             }
         });
 
-        // --- MASTER DATA FUNCTIONS (LOCAL + CLOUD) ---
+        // --- MASTER DATA FUNCTIONS ---
         function loadLocalMaster() {
             const localT = JSON.parse(localStorage.getItem('master_teachers'));
             const localS = JSON.parse(localStorage.getItem('master_subjects'));
             const localC = JSON.parse(localStorage.getItem('master_classes'));
 
-            // Use Local if exist, otherwise Default
+            // LOGIKA PENTING: Jika data lokal kosong, PAKAI DEFAULT agar dropdown tidak hilang
             appData.teachers = (localT && localT.length > 0) ? localT : defaultTeachers;
             appData.subjects = (localS && localS.length > 0) ? localS : defaultSubjects;
             appData.classes = (localC && localC.length > 0) ? localC : defaultClasses;
 
             updateFormOptions();
             renderMasterLists();
+        }
+
+        function forceResetDefaults() {
+            if(confirm("Apakah Anda yakin ingin mereset daftar nama ke pengaturan awal? Data kustom lokal akan hilang.")) {
+                appData.teachers = defaultTeachers;
+                appData.subjects = defaultSubjects;
+                appData.classes = defaultClasses;
+                localStorage.setItem('master_teachers', JSON.stringify(defaultTeachers));
+                localStorage.setItem('master_subjects', JSON.stringify(defaultSubjects));
+                localStorage.setItem('master_classes', JSON.stringify(defaultClasses));
+                updateFormOptions();
+                renderMasterLists();
+                alert("Data berhasil di-reset ke default.");
+            }
         }
 
         // 1. UPLOAD (Admin only)
@@ -479,7 +496,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.result === 'success') {
-                    // Update Local only if cloud has data
+                    // Update Local ONLY IF Server has data.
                     if(data.teachers && data.teachers.length > 0) appData.teachers = data.teachers;
                     if(data.subjects && data.subjects.length > 0) appData.subjects = data.subjects;
                     if(data.classes && data.classes.length > 0) appData.classes = data.classes;
@@ -494,7 +511,7 @@
                     
                     if(verbose) alert("Berhasil! Data Guru/Mapel/Kelas sudah diperbarui dari Server.");
                 } else {
-                    if(verbose) alert("Server merespon, tapi data kosong/baru.");
+                    if(verbose) alert("Server merespon, tapi data kosong (mungkin belum disetup oleh Kepala Sekolah).");
                 }
             })
             .catch(err => {
