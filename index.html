@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIREKAP v5.5 - Final</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --success-text: #15803d;
+            --purple: #9333ea;
+            --purple-light: #f3e8ff;
+            --purple-text: #7e22ce;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --warning-text: #b45309;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--bg); color: var(--text-main); padding-bottom: 40px; }
+
+        /* Login & Setup Overlay */
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-dark); z-index: 999; display: flex; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
+        .box { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .box h2 { color: var(--primary-dark); margin-bottom: 10px; }
+        .box p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .role-btn { width: 100%; padding: 1rem; margin-bottom: 1rem; border: 2px solid var(--border); border-radius: 12px; background: white; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 1rem; color: var(--text-main); }
+        .role-btn:hover { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+        .role-btn.admin { border-color: var(--primary); color: var(--primary); }
+        
+        /* Header */
+        header { background-color: var(--primary-dark); color: white; padding: 1rem 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .header-content { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo h1 { font-size: 1.25rem; font-weight: 700; }
+        
+        .nav-buttons { display: flex; gap: 8px; background: rgba(255,255,255,0.1); padding: 4px; border-radius: 8px; overflow-x: auto; }
+        .nav-btn { background: transparent; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; white-space: nowrap; }
+        .nav-btn.active { background: white; color: var(--primary-dark); }
+
+        .container { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: white; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .icon-blue { background: #eff6ff; color: var(--primary); }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .stat-label { font-size: 0.875rem; color: var(--text-muted); font-weight: 600; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main); font-size: 0.9rem; }
+        input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
+        input:focus { border-color: var(--primary); ring: 2px solid #eff6ff; }
+        
+        .mode-selector { display: flex; gap: 1rem; }
+        .mode-option { flex: 1; }
+        .mode-option input { display: none; }
+        .mode-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); }
+        .mode-option input:checked + .mode-label.sendiri { background: var(--success-light); color: var(--success-text); border-color: var(--success); }
+        .mode-option input:checked + .mode-label.berdua { background: var(--purple-light); color: var(--purple-text); border-color: var(--purple); }
+
+        .btn-submit { width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 1rem; }
+        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .btn-excel { width: 100%; padding: 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 1rem; text-decoration: none; }
+        .btn-excel:hover { background: #15803d; }
+
+        .loader { width: 20px; height: 20px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* API Setup Box */
+        .api-setup { background: #eff6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bfdbfe; text-align: left; }
+        .api-setup input { margin-top: 5px; background: white; margin-bottom: 10px; }
+        .api-setup label { font-size: 0.85rem; color: #1e40af; }
+        
+        .hidden { display: none !important; }
+        
+        /* Table */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        th { text-align: left; padding: 1rem; background: #f1f5f9; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid var(--border); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-sendiri { background: var(--success-light); color: var(--success-text); }
+        .badge-berdua { background: var(--purple-light); color: var(--purple-text); }
+        
+        #notification { position: fixed; top: 20px; right: 20px; background: var(--success); color: white; padding: 1rem 1.5rem; border-radius: 8px; transform: translateY(-150%); transition: transform 0.3s ease-out; z-index: 200; font-weight: 600; }
+        #notification.show { transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; gap: 1rem; }
+            .nav-buttons { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setup & Login Overlay -->
+    <div id="overlay">
+        <div class="box" id="setup-box">
+            <h2>⚙️ Setup Koneksi</h2>
+            <p>Masukkan Link agar aplikasi terhubung ke Cloud.</p>
+            
+            <div class="api-setup">
+                <label>1. Link Web App (Google Script) *Wajib</label>
+                <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/..../exec">
+                
+                <label>2. Link Spreadsheet (Excel) *Wajib utk Kepsek</label>
+                <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+            </div>
+
+            <button class="btn-submit" onclick="saveSettings()">Simpan & Lanjut</button>
+            <button onclick="cancelSetup()" style="margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer; font-size:0.9rem;">Batal</button>
+        </div>
+
+        <div class="box hidden" id="login-box">
+            <h2>SIREKAP ONLINE</h2>
+            <p>Pilih akses masuk:</p>
+            <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
+            <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
+            
+            <div id="password-area" class="hidden" style="margin-top: 15px; text-align: left;">
+                <label>Password Admin</label>
+                <input type="password" id="adminPass" style="margin-bottom: 10px;" placeholder="Masukkan password...">
+                <button class="btn-submit" onclick="checkAdmin()">Masuk Admin</button>
+            </div>
+
+             <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                <button onclick="showSetup()" style="background:none; border:none; color:#64748b; font-size:0.85rem; cursor:pointer; text-decoration:underline; display:flex; align-items:center; justify-content:center; width:100%; gap:6px;">
+                    ⚙️ Edit Koneksi Server
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification">Berhasil!</div>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1 style="font-size: 1.5rem;">SIREKAP</h1>
+                <p id="connection-status">🟡 Offline Mode</p>
+            </div>
+            <div class="nav-buttons hidden" id="admin-nav">
+                <button class="nav-btn active" onclick="switchView('dashboard')">Dashboard</button>
+                <button class="nav-btn" onclick="switchView('form')">Input Absen</button>
+                <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
+            </div>
+            <div class="nav-buttons hidden" id="guru-nav">
+                <span style="color:white; font-weight:bold; padding:8px;">Mode Guru</span>
+                <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- DASHBOARD (ADMIN) -->
+        <div id="view-dashboard" class="hidden">
+            <!-- Tombol Buka Spreadsheet -->
+            <a id="btn-open-sheet" href="#" target="_blank" class="btn-excel hidden">
+                📂 Buka Database (Google Sheet)
+            </a>
+
+            <div class="card" style="text-align: right;">
+                <button class="nav-btn" style="background: #2563eb; color: white;" onclick="fetchCloudData()">🔄 Refresh Data Cloud</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-blue">🕒</div>
+                    <div>
+                        <div class="stat-label">Total Jam</div>
+                        <div class="stat-value" id="total-hours">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #f0fdf4; color: #16a34a;">👤</div>
+                    <div>
+                        <div class="stat-label">Sendiri</div>
+                        <div class="stat-value" id="total-solo">0</div>
+                    </div>
+                </div>
+                 <div class="stat-card">
+                    <div class="stat-icon" style="background: #faf5ff; color: #9333ea;">👥</div>
+                    <div>
+                        <div class="stat-label">Team</div>
+                        <div class="stat-value" id="total-team">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Data Masuk (Real-time)</h2>
+                <div id="loading-indicator" class="hidden" style="text-align: center; padding: 20px; color: #64748b;">
+                    <span class="loader" style="border-color: #64748b; border-bottom-color: transparent;"></span> Sedang mengambil data...
+                </div>
+                <div class="table-responsive">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Guru</th>
+                                <th>Mapel/Kelas</th>
+                                <th>Mode</th>
+                                <th>Jam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM (GURU/ADMIN) -->
+        <div id="view-form" class="hidden">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h2>Form Absensi Online</h2>
+                <p style="font-size:0.9rem; color:#64748b; margin-bottom:1rem;">Data akan langsung terkirim ke server.</p>
+                
+                <form onsubmit="handleFormSubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tanggal</label>
+                            <input type="date" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Waktu Mulai</label>
+                            <input type="time" id="startTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nama Guru</label>
+                        <input type="text" id="teacherName" list="teacherList" required placeholder="Nama Lengkap...">
+                        <datalist id="teacherList">
+                            <option value="Budi Santoso">
+                            <option value="Siti Aminah">
+                            <option value="Ahmad Fauzi">
+                        </datalist>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mata Pelajaran</label>
+                            <input type="text" id="subject" list="subjectList" required>
+                             <datalist id="subjectList">
+                                <option value="Matematika"><option value="IPA"><option value="Bahasa Inggris">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Kelas</label>
+                            <input type="text" id="className" list="classList" required>
+                             <datalist id="classList">
+                                <option value="1A Putra"><option value="1A Putri"><option value="7 Putra">
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Jumlah Jam (JP)</label>
+                            <input type="number" id="hours" min="1" max="10" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mode</label>
+                            <div class="mode-selector">
+                                <div class="mode-option">
+                                    <input type="radio" name="type" id="t-sendiri" value="sendiri" checked>
+                                    <label for="t-sendiri" class="mode-label sendiri">👤 Sendiri</label>
+                                </div>
+                                <div class="mode-option">
+                                    <input type="radio" name="type" id="t-berdua" value="berdua">
+                                    <label for="t-berdua" class="mode-label berdua">👥 Team</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem;">
+                         <label style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="isSubstitute"> Guru Pengganti (Badal)
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btn-save" class="btn-submit">
+                        <span id="btn-text">Kirim ke Cloud ☁️</span>
+                        <span id="btn-loader" class="loader hidden"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let API_URL = localStorage.getItem('guru_api_url') || "https://script.google.com/macros/s/AKfycbx6QpLttVeXSHdovQJRgwccd1xTHrbNqMpP07-xeu-TfAcQQOzVheQsvJEYJ2feUJsi/exec";
+        let SHEET_URL = localStorage.getItem('guru_sheet_url') || "https://docs.google.com/spreadsheets/d/18cRCNqXK860SYVmTDjlyabnL6fgh2sWdTMEG3_Ahpyw/edit?usp=sharing";
+        let entries = [];
+        const ADMIN_PASS = "admin123";
+
+        // --- INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('date').valueAsDate = new Date();
+            const now = new Date();
+            document.getElementById('startTime').value = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+
+            // Pre-fill setup if exists
+            if(API_URL) document.getElementById('apiUrl').value = API_URL;
+            if(SHEET_URL) document.getElementById('sheetUrl').value = SHEET_URL;
+
+            if(API_URL) {
+                document.getElementById('setup-box').classList.add('hidden');
+                document.getElementById('login-box').classList.remove('hidden');
+                document.getElementById('connection-status').textContent = "🟢 Online Connected";
+            }
+        });
+
+        // --- SETUP & LOGIN ---
+        function saveSettings() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const sUrl = document.getElementById('sheetUrl').value.trim();
+            
+            if(url) {
+                localStorage.setItem('guru_api_url', url);
+                API_URL = url;
+                document.getElementById('connection-status').textContent = "🟢 Online Connected";
+            }
+            if(sUrl) {
+                localStorage.setItem('guru_sheet_url', sUrl);
+                SHEET_URL = sUrl;
+            }
+
+            document.getElementById('setup-box').classList.add('hidden');
+            document.getElementById('login-box').classList.remove('hidden');
+        }
+
+        function showSetup() {
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('setup-box').classList.remove('hidden');
+        }
+        
+        function cancelSetup() {
+             document.getElementById('setup-box').classList.add('hidden');
+             document.getElementById('login-box').classList.remove('hidden');
+        }
+
+        function login(role) {
+            if(role === 'guru') {
+                document.getElementById('overlay').classList.add('hidden');
+                document.getElementById('guru-nav').classList.remove('hidden');
+                switchView('form');
+            } else {
+                document.getElementById('password-area').classList.remove('hidden');
+            }
+        }
+
+        function checkAdmin() {
+            if(document.getElementById('adminPass').value === ADMIN_PASS) {
+                document.getElementById('overlay').classList.add('hidden');
+                document.getElementById('admin-nav').classList.remove('hidden');
+                
+                // Show Open Sheet button if URL exists
+                if(SHEET_URL) {
+                    const btn = document.getElementById('btn-open-sheet');
+                    btn.href = SHEET_URL;
+                    btn.classList.remove('hidden');
+                }
+
+                switchView('dashboard');
+                fetchCloudData(); // Auto fetch
+            } else {
+                alert("Password salah!");
+            }
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        function switchView(view) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-form').classList.add('hidden');
+            document.getElementById('view-' + view).classList.remove('hidden');
+        }
+
+        // --- CLOUD OPERATIONS ---
+        
+        // 1. SEND DATA (Guru)
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-save');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            
+            btn.disabled = true;
+            btnText.textContent = "Mengirim...";
+            btnLoader.classList.remove('hidden');
+
+            const mode = document.querySelector('input[name="type"]:checked').value;
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+
+            const payload = {
+                action: 'insert',
+                ID: Date.now(),
+                Tanggal: document.getElementById('date').value,
+                Waktu: document.getElementById('startTime').value,
+                Guru: document.getElementById('teacherName').value,
+                Status: document.getElementById('isSubstitute').checked ? 'Badal' : 'Tetap',
+                Mapel: document.getElementById('subject').value,
+                Kelas: document.getElementById('className').value,
+                Mode: mode,
+                'Jam Sendiri': mode === 'sendiri' ? hours : 0,
+                'Jam Team': mode === 'berdua' ? hours : 0
+            };
+
+            if(API_URL) {
+                const params = new URLSearchParams();
+                for (const key in payload) { params.append(key, payload[key]); }
+
+                fetch(API_URL, {
+                    method: 'POST',
+                    body: params
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.result === 'success') {
+                        showNotification('Data Terkirim ke Cloud!');
+                        resetForm();
+                    } else {
+                        alert('Server Gagal Menyimpan: ' + JSON.stringify(data));
+                    }
+                })
+                .catch(err => {
+                    alert("Error Koneksi: Gagal menghubungi server Google.");
+                    console.error(err);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.textContent = "Kirim ke Cloud ☁️";
+                    btnLoader.classList.add('hidden');
+                });
+            } else {
+                alert("Anda dalam mode Offline. Data tidak tersimpan ke Cloud.");
+                btn.disabled = false;
+                btnLoader.classList.add('hidden');
+            }
+        }
+
+        // 2. GET DATA (Admin)
+        function fetchCloudData() {
+            if(!API_URL) return;
+
+            const loader = document.getElementById('loading-indicator');
+            const tbody = document.getElementById('table-body');
+            
+            loader.classList.remove('hidden');
+            tbody.innerHTML = '';
+
+            fetch(API_URL + '?action=read')
+            .then(response => response.json())
+            .then(json => {
+                if(json.result === 'success') {
+                    entries = json.data;
+                    renderTable(entries);
+                    updateStats(entries);
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => {
+                loader.classList.add('hidden');
+            });
+        }
+
+        // --- RENDER & UTILS ---
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            data.sort((a,b) => b.ID - a.ID);
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const badgeClass = row.Mode === 'sendiri' ? 'badge-sendiri' : 'badge-berdua';
+                
+                // ROBUST PARSING: Check multiple possible key names
+                const jamSendiri = parseInt(row['Jam Sendiri'] || row['Jam sendiri'] || row['jam sendiri'] || 0);
+                const jamTeam = parseInt(row['Jam Team'] || row['Jam team'] || row['jam team'] || 0);
+                const totalJam = jamSendiri + jamTeam;
+                
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:bold;">${row.Tanggal}</div>
+                        <div style="font-size:0.8rem; color:#64748b;">${row.Waktu}</div>
+                    </td>
+                    <td>
+                        <div>${row.Guru}</div>
+                        ${row.Status === 'Badal' ? '<span class="badge" style="background:#fff7ed; color:#c2410c; border:1px solid #fed7aa;">Badal</span>' : ''}
+                    </td>
+                    <td>
+                        <div>${row.Mapel}</div>
+                        <span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-size:0.8rem;">${row.Kelas}</span>
+                    </td>
+                    <td><span class="badge ${badgeClass}">${row.Mode}</span></td>
+                    <td style="font-weight:bold; text-align:center;">${totalJam > 0 ? totalJam : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats(data) {
+            // ROBUST CALCULATION
+            const solo = data.reduce((sum, r) => sum + (parseInt(r['Jam Sendiri'] || r['Jam sendiri'] || r['jam sendiri'] || 0)), 0);
+            const team = data.reduce((sum, r) => sum + (parseInt(r['Jam Team'] || r['Jam team'] || r['jam team'] || 0)), 0);
+            const total = solo + team;
+
+            document.getElementById('total-hours').textContent = total;
+            document.getElementById('total-solo').textContent = solo;
+            document.getElementById('total-team').textContent = team;
+        }
+
+        function resetForm() {
+            document.getElementById('teacherName').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('className').value = '';
+            document.getElementById('isSubstitute').checked = false;
+        }
+
+        function showNotification(msg) {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
