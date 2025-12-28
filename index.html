@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v7.0 - Full Sync</title>
+    <title>SIREKAP v7.1 - Fix Sync</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -113,7 +113,8 @@
         #notification.show { transform: translateY(0); }
 
         /* Sync Status */
-        .sync-status { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-style: italic; }
+        .sync-status { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-weight: bold; }
+        .sync-status.unsaved { color: #ef4444; }
 
         @media (max-width: 768px) {
             .form-row, .master-grid { grid-template-columns: 1fr; }
@@ -143,7 +144,7 @@
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v7.0</h2>
+            <h2>SIREKAP v7.1</h2>
             <p>Pilih akses masuk:</p>
             <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
             <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
@@ -249,7 +250,7 @@
                 <div class="flex-between" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
                     <div>
                         <h2>Kelola Data Master Sekolah</h2>
-                        <p class="sync-status" id="master-sync-status">Status: Belum disinkronkan</p>
+                        <p class="sync-status" id="master-sync-status">Status: Aman</p>
                     </div>
                     <!-- Tombol Simpan ke Cloud -->
                     <button class="btn-submit" style="width:auto; margin:0; background:#16a34a;" onclick="uploadMasterData()">
@@ -296,8 +297,9 @@
             <div class="card" style="max-width: 600px; margin: 0 auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <h2>Form Absensi Online</h2>
-                    <button onclick="downloadMasterData()" style="background:none; border:1px solid #cbd5e1; padding:5px 10px; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔄 Update Nama Guru</button>
+                    <button id="btn-update-guru" onclick="downloadMasterData(true)" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#334155; font-weight:600;">🔄 Update Nama Guru</button>
                 </div>
+                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Klik "Update Nama Guru" jika nama Anda belum muncul.</p>
                 
                 <form onsubmit="handleFormSubmit(event)">
                     <div class="form-row">
@@ -402,8 +404,6 @@
                 document.getElementById('setup-box').classList.add('hidden');
                 document.getElementById('login-box').classList.remove('hidden');
                 document.getElementById('connection-status').textContent = "🟢 Online Connected";
-                // Auto sync master data on load
-                downloadMasterData();
             }
         });
 
@@ -436,7 +436,8 @@
             .then(data => {
                 if(data.result === 'success') {
                     showNotification("Data Master Tersimpan di Cloud!");
-                    document.getElementById('master-sync-status').textContent = "Status: Terakhir disinkronkan " + new Date().toLocaleTimeString();
+                    document.getElementById('master-sync-status').textContent = "Status: Tersimpan & Sinkron";
+                    document.getElementById('master-sync-status').classList.remove('unsaved');
                 } else {
                     alert("Gagal simpan: " + JSON.stringify(data));
                 }
@@ -449,17 +450,26 @@
         }
 
         // 2. DOWNLOAD (Guru & Admin)
-        function downloadMasterData() {
-            if(!API_URL) return;
+        function downloadMasterData(verbose = false) {
+            if(!API_URL) {
+                if(verbose) alert("Belum terkoneksi ke server. Masukkan URL Web App dulu.");
+                return;
+            }
             
+            if(verbose) {
+                const btn = document.getElementById('btn-update-guru');
+                btn.textContent = "Mengambil data...";
+                btn.disabled = true;
+            }
+
             fetch(API_URL + '?action=get_master')
             .then(res => res.json())
             .then(data => {
                 if(data.result === 'success') {
-                    // Update Local
-                    if(data.teachers.length > 0) appData.teachers = data.teachers;
-                    if(data.subjects.length > 0) appData.subjects = data.subjects;
-                    if(data.classes.length > 0) appData.classes = data.classes;
+                    // Only update if data exists to prevent wiping local on error
+                    if(data.teachers && data.teachers.length > 0) appData.teachers = data.teachers;
+                    if(data.subjects && data.subjects.length > 0) appData.subjects = data.subjects;
+                    if(data.classes && data.classes.length > 0) appData.classes = data.classes;
                     
                     // Save to LocalStorage
                     localStorage.setItem('master_teachers', JSON.stringify(appData.teachers));
@@ -468,10 +478,23 @@
                     
                     updateFormOptions();
                     renderMasterLists();
-                    console.log("Master data updated from cloud");
+                    
+                    if(verbose) alert("Berhasil! Data Guru/Mapel/Kelas sudah diperbarui dari Server.");
+                } else {
+                    if(verbose) alert("Server merespon, tapi data kosong.");
                 }
             })
-            .catch(err => console.log("Silent error fetching master data", err));
+            .catch(err => {
+                console.log("Error fetching master data", err);
+                if(verbose) alert("Gagal mengambil data. Cek koneksi internet.");
+            })
+            .finally(() => {
+                if(verbose) {
+                    const btn = document.getElementById('btn-update-guru');
+                    btn.textContent = "🔄 Update Nama Guru";
+                    btn.disabled = false;
+                }
+            });
         }
 
         function updateFormOptions() {
@@ -507,16 +530,20 @@
                 renderMasterLists();
                 updateFormOptions();
                 input.value = '';
-                document.getElementById('master-sync-status').textContent = "Status: Ada perubahan belum disimpan!";
+                const status = document.getElementById('master-sync-status');
+                status.textContent = "⚠️ Ada perubahan BELUM DISIMPAN! Klik tombol hijau.";
+                status.classList.add('unsaved');
             }
         }
 
         function deleteMasterItem(type, index) {
-            if(confirm('Hapus data ini? (Ingat klik Simpan ke Cloud setelahnya)')) {
+            if(confirm('Hapus data ini?')) {
                 appData[type].splice(index, 1);
                 renderMasterLists();
                 updateFormOptions();
-                document.getElementById('master-sync-status').textContent = "Status: Ada perubahan belum disimpan!";
+                const status = document.getElementById('master-sync-status');
+                status.textContent = "⚠️ Ada perubahan BELUM DISIMPAN! Klik tombol hijau.";
+                status.classList.add('unsaved');
             }
         }
 
@@ -556,7 +583,7 @@
                 document.getElementById('overlay').classList.add('hidden');
                 document.getElementById('guru-nav').classList.remove('hidden');
                 switchView('form');
-                downloadMasterData(); // Guru gets fresh data on login
+                downloadMasterData(false); // Silent sync on login
             } else {
                 document.getElementById('password-area').classList.remove('hidden');
             }
@@ -576,7 +603,7 @@
 
                 switchView('dashboard');
                 fetchCloudData();
-                downloadMasterData(); // Admin syncs master too
+                downloadMasterData(false); // Admin syncs master too
             } else {
                 alert("Password salah!");
             }
