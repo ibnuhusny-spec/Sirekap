@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v6.0 - Manajemen Sekolah</title>
+    <title>SIREKAP v7.0 - Full Sync</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -112,6 +112,9 @@
         #notification { position: fixed; top: 20px; right: 20px; background: var(--success); color: white; padding: 1rem 1.5rem; border-radius: 8px; transform: translateY(-150%); transition: transform 0.3s ease-out; z-index: 200; font-weight: 600; }
         #notification.show { transform: translateY(0); }
 
+        /* Sync Status */
+        .sync-status { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-style: italic; }
+
         @media (max-width: 768px) {
             .form-row, .master-grid { grid-template-columns: 1fr; }
             .header-content { flex-direction: column; gap: 1rem; }
@@ -140,7 +143,7 @@
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v6.0</h2>
+            <h2>SIREKAP v7.0</h2>
             <p>Pilih akses masuk:</p>
             <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
             <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
@@ -167,13 +170,13 @@
                 <h1 style="font-size: 1.5rem;">SIREKAP</h1>
                 <p id="connection-status">🟡 Offline Mode</p>
             </div>
-            <!-- Menu Admin: Dashboard & Data Master (No Input) -->
+            <!-- Menu Admin -->
             <div class="nav-buttons hidden" id="admin-nav">
                 <button class="nav-btn active" onclick="switchView('dashboard')">Dashboard</button>
                 <button class="nav-btn" onclick="switchView('master')">Data Master</button>
                 <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
             </div>
-            <!-- Menu Guru: Input Absen Saja -->
+            <!-- Menu Guru -->
             <div class="nav-buttons hidden" id="guru-nav">
                 <span style="color:white; font-weight:bold; padding:8px;">Mode Guru</span>
                 <button class="nav-btn" style="background: #ef4444;" onclick="logout()">Keluar</button>
@@ -244,8 +247,14 @@
         <div id="view-master" class="hidden">
             <div class="card">
                 <div class="flex-between" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
-                    <h2>Kelola Data Master Sekolah</h2>
-                    <p style="font-size:0.9rem; color:var(--text-muted);">Tambah atau hapus data agar muncul di pilihan guru.</p>
+                    <div>
+                        <h2>Kelola Data Master Sekolah</h2>
+                        <p class="sync-status" id="master-sync-status">Status: Belum disinkronkan</p>
+                    </div>
+                    <!-- Tombol Simpan ke Cloud -->
+                    <button class="btn-submit" style="width:auto; margin:0; background:#16a34a;" onclick="uploadMasterData()">
+                        💾 Simpan Perubahan ke Cloud
+                    </button>
                 </div>
 
                 <div class="master-grid">
@@ -285,8 +294,10 @@
         <!-- FORM INPUT (GURU ONLY) -->
         <div id="view-form" class="hidden">
             <div class="card" style="max-width: 600px; margin: 0 auto;">
-                <h2>Form Absensi Online</h2>
-                <p style="font-size:0.9rem; color:#64748b; margin-bottom:1rem;">Data akan langsung terkirim ke server.</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h2>Form Absensi Online</h2>
+                    <button onclick="downloadMasterData()" style="background:none; border:1px solid #cbd5e1; padding:5px 10px; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔄 Update Nama Guru</button>
+                </div>
                 
                 <form onsubmit="handleFormSubmit(event)">
                     <div class="form-row">
@@ -368,15 +379,11 @@
         const ADMIN_PASS = "admin123";
         let currentUserRole = null;
 
-        // DATA MASTER (Default & Local Storage)
-        const defaultTeachers = ["Budi Santoso", "Siti Aminah", "Ahmad Fauzi"];
-        const defaultSubjects = ["Matematika", "B. Indonesia", "B. Inggris", "IPA", "IPS", "PPKn", "PJOK", "PAI", "Tahfidz"];
-        const defaultClasses = ["1A Putra", "1B Putra", "1A Putri", "1B Putri", "7 Putra", "7 Putri"];
-
+        // DATA MASTER
         let appData = {
-            teachers: JSON.parse(localStorage.getItem('master_teachers')) || defaultTeachers,
-            subjects: JSON.parse(localStorage.getItem('master_subjects')) || defaultSubjects,
-            classes: JSON.parse(localStorage.getItem('master_classes')) || defaultClasses
+            teachers: [],
+            subjects: [],
+            classes: []
         };
 
         // --- INIT ---
@@ -388,22 +395,83 @@
             if(API_URL) document.getElementById('apiUrl').value = API_URL;
             if(SHEET_URL) document.getElementById('sheetUrl').value = SHEET_URL;
 
-            updateFormOptions();
+            // Load local backup first
+            loadLocalMaster();
 
             if(API_URL) {
                 document.getElementById('setup-box').classList.add('hidden');
                 document.getElementById('login-box').classList.remove('hidden');
                 document.getElementById('connection-status').textContent = "🟢 Online Connected";
+                // Auto sync master data on load
+                downloadMasterData();
             }
         });
 
-        // --- MASTER DATA FUNCTIONS ---
-        function saveMasterData() {
-            localStorage.setItem('master_teachers', JSON.stringify(appData.teachers));
-            localStorage.setItem('master_subjects', JSON.stringify(appData.subjects));
-            localStorage.setItem('master_classes', JSON.stringify(appData.classes));
+        // --- MASTER DATA FUNCTIONS (LOCAL + CLOUD) ---
+        function loadLocalMaster() {
+            appData.teachers = JSON.parse(localStorage.getItem('master_teachers')) || [];
+            appData.subjects = JSON.parse(localStorage.getItem('master_subjects')) || [];
+            appData.classes = JSON.parse(localStorage.getItem('master_classes')) || [];
             updateFormOptions();
             renderMasterLists();
+        }
+
+        // 1. UPLOAD (Admin only)
+        function uploadMasterData() {
+            if(!API_URL) return alert("Offline Mode");
+            
+            const btn = document.querySelector('#view-master .btn-submit');
+            const originalText = btn.textContent;
+            btn.textContent = "Menyimpan...";
+            btn.disabled = true;
+
+            const params = new URLSearchParams();
+            params.append('action', 'save_master');
+            params.append('teachers', JSON.stringify(appData.teachers));
+            params.append('subjects', JSON.stringify(appData.subjects));
+            params.append('classes', JSON.stringify(appData.classes));
+
+            fetch(API_URL, { method: 'POST', body: params })
+            .then(res => res.json())
+            .then(data => {
+                if(data.result === 'success') {
+                    showNotification("Data Master Tersimpan di Cloud!");
+                    document.getElementById('master-sync-status').textContent = "Status: Terakhir disinkronkan " + new Date().toLocaleTimeString();
+                } else {
+                    alert("Gagal simpan: " + JSON.stringify(data));
+                }
+            })
+            .catch(err => alert("Error upload"))
+            .finally(() => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        // 2. DOWNLOAD (Guru & Admin)
+        function downloadMasterData() {
+            if(!API_URL) return;
+            
+            fetch(API_URL + '?action=get_master')
+            .then(res => res.json())
+            .then(data => {
+                if(data.result === 'success') {
+                    // Update Local
+                    if(data.teachers.length > 0) appData.teachers = data.teachers;
+                    if(data.subjects.length > 0) appData.subjects = data.subjects;
+                    if(data.classes.length > 0) appData.classes = data.classes;
+                    
+                    // Save to LocalStorage
+                    localStorage.setItem('master_teachers', JSON.stringify(appData.teachers));
+                    localStorage.setItem('master_subjects', JSON.stringify(appData.subjects));
+                    localStorage.setItem('master_classes', JSON.stringify(appData.classes));
+                    
+                    updateFormOptions();
+                    renderMasterLists();
+                    console.log("Master data updated from cloud");
+                }
+            })
+            .catch(err => console.log("Silent error fetching master data", err));
         }
 
         function updateFormOptions() {
@@ -435,16 +503,20 @@
             if (val) {
                 appData[type].push(val);
                 appData[type].sort();
-                saveMasterData();
+                // We update local display, but User MUST click "Simpan ke Cloud" to persist remotely
+                renderMasterLists();
+                updateFormOptions();
                 input.value = '';
-                showNotification('Data ditambahkan!');
+                document.getElementById('master-sync-status').textContent = "Status: Ada perubahan belum disimpan!";
             }
         }
 
         function deleteMasterItem(type, index) {
-            if(confirm('Hapus data ini?')) {
+            if(confirm('Hapus data ini? (Ingat klik Simpan ke Cloud setelahnya)')) {
                 appData[type].splice(index, 1);
-                saveMasterData();
+                renderMasterLists();
+                updateFormOptions();
+                document.getElementById('master-sync-status').textContent = "Status: Ada perubahan belum disimpan!";
             }
         }
 
@@ -457,6 +529,7 @@
                 localStorage.setItem('guru_api_url', url);
                 API_URL = url;
                 document.getElementById('connection-status').textContent = "🟢 Online Connected";
+                downloadMasterData(); // Fetch immediately
             }
             if(sUrl) {
                 localStorage.setItem('guru_sheet_url', sUrl);
@@ -483,6 +556,7 @@
                 document.getElementById('overlay').classList.add('hidden');
                 document.getElementById('guru-nav').classList.remove('hidden');
                 switchView('form');
+                downloadMasterData(); // Guru gets fresh data on login
             } else {
                 document.getElementById('password-area').classList.remove('hidden');
             }
@@ -502,7 +576,7 @@
 
                 switchView('dashboard');
                 fetchCloudData();
-                renderMasterLists(); // Render master data list for admin
+                downloadMasterData(); // Admin syncs master too
             } else {
                 alert("Password salah!");
             }
@@ -513,21 +587,17 @@
         }
 
         function switchView(view) {
-            // Hide all views
             document.getElementById('view-dashboard').classList.add('hidden');
             document.getElementById('view-form').classList.add('hidden');
             document.getElementById('view-master').classList.add('hidden');
             
-            // Buttons logic
             const adminBtns = document.querySelectorAll('#admin-nav .nav-btn');
             adminBtns.forEach(b => b.classList.remove('active'));
 
-            // Show selected
             document.getElementById('view-' + view).classList.remove('hidden');
             
             if(currentUserRole === 'admin') {
                 if(view === 'dashboard') adminBtns[0].classList.add('active');
-                // Admin no longer has "Input Absen" button logic here since it's removed from nav
                 if(view === 'master') adminBtns[1].classList.add('active');
             }
         }
@@ -545,11 +615,6 @@
 
             const mode = document.querySelector('input[name="type"]:checked').value;
             const hours = parseInt(document.getElementById('hours').value) || 0;
-
-            // Auto-save logic removed for Guru to ensure Headmaster controls Master Data?
-            // Actually, keeping local auto-save for Guru convenience is good, 
-            // BUT Headmaster specifically asked to manage it. 
-            // So we will NOT auto-add new names to Master List here.
 
             const payload = {
                 action: 'insert',
