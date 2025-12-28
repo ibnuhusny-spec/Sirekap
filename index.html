@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIREKAP v7.4 - Fix Dropdown HP</title>
+    <title>SIREKAP v7.5 - Validasi Ketat</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -67,11 +67,11 @@
 
         /* --- CUSTOM AUTOCOMPLETE DROPDOWN STYLES --- */
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group { margin-bottom: 1rem; position: relative; } /* Relative for dropdown positioning */
+        .form-group { margin-bottom: 1rem; position: relative; }
         
         label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-main); font-size: 0.9rem; }
         input, select { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; outline: none; }
-        input:focus { border-color: var(--primary); ring: 2px solid #eff6ff; }
+        input:focus, select:focus { border-color: var(--primary); ring: 2px solid #eff6ff; }
 
         .autocomplete-list {
             position: absolute;
@@ -86,7 +86,7 @@
             overflow-y: auto;
             z-index: 1000;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            display: none; /* Hidden by default */
+            display: none;
         }
         .autocomplete-list.show { display: block; }
         
@@ -184,7 +184,7 @@
         </div>
 
         <div class="box hidden" id="login-box">
-            <h2>SIREKAP v7.4</h2>
+            <h2>SIREKAP v7.5</h2>
             <p>Pilih akses masuk:</p>
             <button class="role-btn" onclick="login('guru')">👨‍🏫 Masuk sebagai GURU</button>
             <button class="role-btn admin" onclick="login('admin')">🔐 Masuk sebagai KEPALA SEKOLAH</button>
@@ -340,7 +340,7 @@
                         <button onclick="forceResetDefaults()" style="background:#fef2f2; border:1px solid #fee2e2; padding:8px 12px; border-radius:6px; font-size:0.8rem; cursor:pointer; color:#ef4444; font-weight:600;">⚠️ Reset</button>
                     </div>
                 </div>
-                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Ketuk kolom untuk memilih dari daftar.</p>
+                <p style="font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:1rem;">Pilih data dari daftar. Anda tidak bisa mengetik bebas.</p>
                 
                 <form onsubmit="handleFormSubmit(event)">
                     <div class="form-row">
@@ -380,7 +380,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Jumlah Jam (JP)</label>
-                            <input type="number" id="hours" min="1" max="10" value="2" required>
+                            <select id="hours" required>
+                                <option value="" disabled selected>Pilih Jam...</option>
+                                <option value="1">1 Jam</option>
+                                <option value="2">2 Jam</option>
+                                <option value="3">3 Jam</option>
+                                <option value="4">4 Jam</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Mode</label>
@@ -736,15 +742,42 @@
             const mode = document.querySelector('input[name="type"]:checked').value;
             const hours = parseInt(document.getElementById('hours').value) || 0;
 
+            const rawTeacher = document.getElementById('teacherName').value.trim();
+            const rawSubject = document.getElementById('subject').value.trim();
+            const rawClass = document.getElementById('className').value.trim();
+
+            // Strict Validation
+            if (!appData.teachers.includes(rawTeacher)) {
+                alert("Nama Guru tidak terdaftar! Mohon pilih nama yang muncul di daftar.");
+                btn.disabled = false;
+                btnText.textContent = "Kirim ke Cloud ☁️";
+                btnLoader.classList.add('hidden');
+                return;
+            }
+            if (!appData.subjects.includes(rawSubject)) {
+                alert("Mata Pelajaran tidak terdaftar! Mohon pilih dari daftar.");
+                btn.disabled = false;
+                btnText.textContent = "Kirim ke Cloud ☁️";
+                btnLoader.classList.add('hidden');
+                return;
+            }
+            if (!appData.classes.includes(rawClass)) {
+                alert("Kelas tidak terdaftar! Mohon pilih dari daftar.");
+                btn.disabled = false;
+                btnText.textContent = "Kirim ke Cloud ☁️";
+                btnLoader.classList.add('hidden');
+                return;
+            }
+
             const payload = {
                 action: 'insert',
                 ID: Date.now(),
                 Tanggal: document.getElementById('date').value,
                 Waktu: document.getElementById('startTime').value,
-                Guru: document.getElementById('teacherName').value,
+                Guru: rawTeacher,
                 Status: document.getElementById('isSubstitute').checked ? 'Badal' : 'Tetap',
-                Mapel: document.getElementById('subject').value,
-                Kelas: document.getElementById('className').value,
+                Mapel: rawSubject,
+                Kelas: rawClass,
                 Mode: mode,
                 'Jam Sendiri': mode === 'sendiri' ? hours : 0,
                 'Jam Team': mode === 'berdua' ? hours : 0
