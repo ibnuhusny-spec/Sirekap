@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v9.7 - Fix Keyboard</title>
+    <title>SIREKAP v9.8 - Secure Mode</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -178,7 +178,7 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 9.7 Mobile</p>
+        <p class="splash-version">Versi 9.8 Mobile Secure</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
@@ -196,9 +196,9 @@
             
             <div id="setup-area" class="hidden" style="margin-top:20px; text-align:left;">
                 <label>Link Google Script</label>
-                <input type="text" id="apiUrl" placeholder="https://script.google.com/..." autocomplete="off">
+                <input type="text" id="apiUrl" name="sirekap_api_url_no_remember" placeholder="https://script.google.com/..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <label>Link Spreadsheet</label>
-                <input type="text" id="sheetUrl" placeholder="https://docs.google.com/..." autocomplete="off">
+                <input type="text" id="sheetUrl" name="sirekap_sheet_url_no_remember" placeholder="https://docs.google.com/..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <button class="btn-submit click-sound" onclick="saveApi()">Simpan</button>
             </div>
 
@@ -214,14 +214,20 @@
                 <!-- PASSWORD AREA DENGAN ANTI-AUTOFILL -->
                 <div id="pass-area" class="hidden" style="margin-top:20px; text-align:left; background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0;">
                     <label>Password Admin</label>
+                    
+                    <!-- INPUT PALSU UNTUK MENIPU BROWSER -->
+                    <input style="display:none" type="text" name="fakeusernameremembered"/>
+                    <input style="display:none" type="password" name="fakepasswordremembered"/>
+
                     <input type="password" 
-                           id="adminPass" 
-                           name="sirekap_admin_password_unique"
+                           id="adminPass_secure" 
+                           name="sirekap_admin_password_secure_random_id"
                            placeholder="Ketik password..." 
                            style="background:white;" 
-                           autocomplete="off" 
+                           autocomplete="new-password" 
                            readonly 
                            onfocus="this.removeAttribute('readonly');">
+                    
                     <div style="display:flex; gap:10px;">
                         <button class="btn-submit click-sound" style="margin-top:0; flex:2;" onclick="checkAdmin()">Masuk</button>
                         <button class="nav-btn click-sound" style="flex:1; background:#e2e8f0; border:1px solid #cbd5e1;" onclick="cancelAdmin()">Batal</button>
@@ -428,12 +434,8 @@
             if(savedM) MASTER = JSON.parse(savedM);
 
             if(API_URL) {
-                document.getElementById('setup-area').classList.add('hidden');
                 document.getElementById('status-koneksi').textContent = "🟢 Online";
                 syncMaster();
-            } else {
-                document.getElementById('setup-area').classList.remove('hidden');
-                document.getElementById('role-area').classList.add('hidden');
             }
             if(SHEET_URL) {
                 document.getElementById('btn-open-kbm').href = SHEET_URL;
@@ -479,11 +481,11 @@
         function cancelAdmin() {
             document.getElementById('btn-guru').classList.remove('hidden');
             document.getElementById('pass-area').classList.add('hidden');
-            document.getElementById('adminPass').value = '';
+            document.getElementById('adminPass_secure').value = '';
         }
         
         function checkAdmin() { 
-            if(document.getElementById('adminPass').value===ADMIN_PASS) { 
+            if(document.getElementById('adminPass_secure').value===ADMIN_PASS) { 
                 document.getElementById('overlay').classList.add('hidden'); 
                 document.getElementById('admin-nav').classList.remove('hidden'); 
                 switchView('dashboard'); 
@@ -501,7 +503,7 @@
             // Reset Login Modal State
             document.getElementById('btn-guru').classList.remove('hidden');
             document.getElementById('pass-area').classList.add('hidden');
-            document.getElementById('adminPass').value = '';
+            document.getElementById('adminPass_secure').value = '';
             
             // Show Splash
             document.getElementById('overlay').classList.add('hidden');
