@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v9.6 - Final Secure</title>
+    <title>SIREKAP v9.7 - Fix Keyboard</title>
     <style>
         :root {
             --primary: #3b82f6;
@@ -178,7 +178,7 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 9.6 Mobile</p>
+        <p class="splash-version">Versi 9.7 Mobile</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
@@ -196,9 +196,9 @@
             
             <div id="setup-area" class="hidden" style="margin-top:20px; text-align:left;">
                 <label>Link Google Script</label>
-                <input type="text" id="apiUrl" placeholder="https://script.google.com/...">
+                <input type="text" id="apiUrl" placeholder="https://script.google.com/..." autocomplete="off">
                 <label>Link Spreadsheet</label>
-                <input type="text" id="sheetUrl" placeholder="https://docs.google.com/...">
+                <input type="text" id="sheetUrl" placeholder="https://docs.google.com/..." autocomplete="off">
                 <button class="btn-submit click-sound" onclick="saveApi()">Simpan</button>
             </div>
 
@@ -211,10 +211,17 @@
                     <span style="font-size:1.5rem;">🔐</span> <span>KEPALA SEKOLAH</span>
                 </button>
                 
-                <!-- PASSWORD AREA -->
+                <!-- PASSWORD AREA DENGAN ANTI-AUTOFILL -->
                 <div id="pass-area" class="hidden" style="margin-top:20px; text-align:left; background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0;">
                     <label>Password Admin</label>
-                    <input type="password" id="adminPass" placeholder="Ketik password..." style="background:white;" autocomplete="new-password">
+                    <input type="password" 
+                           id="adminPass" 
+                           name="sirekap_admin_password_unique"
+                           placeholder="Ketik password..." 
+                           style="background:white;" 
+                           autocomplete="off" 
+                           readonly 
+                           onfocus="this.removeAttribute('readonly');">
                     <div style="display:flex; gap:10px;">
                         <button class="btn-submit click-sound" style="margin-top:0; flex:2;" onclick="checkAdmin()">Masuk</button>
                         <button class="nav-btn click-sound" style="flex:1; background:#e2e8f0; border:1px solid #cbd5e1;" onclick="cancelAdmin()">Batal</button>
@@ -421,8 +428,12 @@
             if(savedM) MASTER = JSON.parse(savedM);
 
             if(API_URL) {
+                document.getElementById('setup-area').classList.add('hidden');
                 document.getElementById('status-koneksi').textContent = "🟢 Online";
                 syncMaster();
+            } else {
+                document.getElementById('setup-area').classList.remove('hidden');
+                document.getElementById('role-area').classList.add('hidden');
             }
             if(SHEET_URL) {
                 document.getElementById('btn-open-kbm').href = SHEET_URL;
