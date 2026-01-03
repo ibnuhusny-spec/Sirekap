@@ -3,170 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v9.9 - Final Fix</title>
+    <title>SIREKAP v10.2 - Final Polish</title>
     <style>
         :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --primary-shadow: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
+            /* Palette Warna */
+            --primary: #4f46e5; --primary-dark: #4338ca; --primary-shadow: #312e81;
+            --success: #10b981; --success-shadow: #047857;
+            --danger: #ef4444; --danger-shadow: #b91c1c;
+            --warning: #f59e0b; --warning-shadow: #b45309;
+            --info: #3b82f6; --info-shadow: #1d4ed8;
+            --purple: #8b5cf6; --purple-shadow: #5b21b6;
+            --bg: #f8fafc; --text-main: #1e293b; --text-muted: #64748b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            padding-bottom: 80px;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-color: var(--bg); color: var(--text-main); padding-bottom: 90px;
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
+
+        /* --- CLASS TOMBOL 3D --- */
+        .btn-3d {
+            border: none; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem; font-weight: 700; color: white;
+            cursor: pointer; transition: all 0.1s; position: relative; top: 0; text-decoration: none;
+            display: inline-flex; justify-content: center; align-items: center; gap: 8px; width: 100%;
+        }
+        .btn-3d:active { top: 4px; box-shadow: none !important; }
+        .btn-3d:disabled { background: #94a3b8 !important; box-shadow: none !important; top: 4px; cursor: not-allowed; }
+
+        .btn-primary { background: var(--primary); box-shadow: 0 4px 0 var(--primary-shadow); }
+        .btn-success { background: var(--success); box-shadow: 0 4px 0 var(--success-shadow); }
+        .btn-danger  { background: var(--danger);  box-shadow: 0 4px 0 var(--danger-shadow); }
+        .btn-warning { background: var(--warning); box-shadow: 0 4px 0 var(--warning-shadow); }
+        .btn-info    { background: var(--info);    box-shadow: 0 4px 0 var(--info-shadow); }
+        .btn-purple  { background: var(--purple);  box-shadow: 0 4px 0 var(--purple-shadow); }
+        .btn-white   { background: white; color: var(--text-main); box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0; }
 
         /* --- SPLASH SCREEN --- */
         #splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #f8fafc;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
             background-size: 30px 30px;
             z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             text-align: center; padding: 30px;
         }
-        
         @keyframes breathe {
             0% { transform: scale(1); filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1)); }
-            50% { transform: scale(1.08); filter: drop-shadow(0 15px 25px rgba(59, 130, 246, 0.3)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 15px 25px rgba(79, 70, 229, 0.2)); }
             100% { transform: scale(1); filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1)); }
         }
+        .splash-logo { width: 120px; margin-bottom: 30px; animation: breathe 3s infinite ease-in-out; }
+        .splash-app-name { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 0px white; }
+        .splash-version { font-size: 0.9rem; color: #64748b; margin-bottom: 40px; font-weight: 600; background: white; padding: 4px 12px; border-radius: 20px; border: 1px solid #e2e8f0; }
+        .splash-school { font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 5px 0; line-height: 1.4; }
+        .splash-sub { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
-        .splash-logo { width: 110px; margin-bottom: 25px; animation: breathe 3s infinite ease-in-out; }
-        .splash-app-name { font-size: 2.8rem; font-weight: 900; color: var(--primary-dark); margin: 0; letter-spacing: -1px; text-shadow: 2px 2px 0px white; }
-        .splash-version { font-size: 0.9rem; color: #64748b; margin-bottom: 30px; font-weight: 600; background: white; padding: 2px 10px; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .splash-school { font-size: 1.2rem; font-weight: 800; color: var(--text-main); margin: 5px 0; line-height: 1.4; text-shadow: 2px 2px 0px white; }
-        .splash-sub { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 60px; background: white; padding: 5px 15px; border-radius: 20px; border: 1px solid #e2e8f0; }
-        
-        .btn-start {
-            padding: 18px 60px; background: var(--primary); color: white; border: none; border-radius: 25px;
-            font-size: 1.2rem; font-weight: 800; cursor: pointer; 
-            box-shadow: 0 8px 0 var(--primary-shadow), 0 20px 30px rgba(59, 130, 246, 0.4);
-            transition: all 0.1s; animation: breathe 2.5s infinite ease-in-out;
-        }
-        .btn-start:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-shadow), inset 0 2px 5px rgba(0,0,0,0.2); animation: none; }
+        /* FIX TOMBOL MULAI AGAR TIDAK MELEBAR */
+        .btn-start-wrapper { width: 100%; max-width: 280px; } 
 
         /* --- OVERLAY & LOGIN --- */
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .box { background: white; padding: 2.5rem 2rem; border-radius: 24px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid #e2e8f0; }
+        .box { background: white; padding: 2rem; border-radius: 24px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid white; }
         
-        .role-btn {
-            width: 100%; padding: 20px; margin-bottom: 15px; 
-            border: none; border-radius: 18px; 
-            background: #f8fafc; color: var(--text-main);
-            font-weight: 700; font-size: 1.05rem; cursor: pointer;
-            box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0;
-            transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 12px;
-        }
-        .role-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
-        
-        .role-btn.guru { background: linear-gradient(to bottom, #ffffff, #f1f5f9); color: #334155; }
-        .role-btn.admin { background: linear-gradient(to bottom, #eff6ff, #dbeafe); color: var(--primary-dark); box-shadow: 0 4px 0 #93c5fd; border-color: #bfdbfe; }
-        .role-btn.admin:active { box-shadow: 0 0 0 #93c5fd; }
-
         /* --- HEADER & NAV --- */
-        header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e2e8f0; }
+        header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #e2e8f0; }
         .header-content { max-width: 800px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-        .nav-btn { background: #f1f5f9; color: var(--text-muted); border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 12px; cursor: pointer; font-size: 0.8rem; font-weight: 700; transition: 0.2s; }
+        .nav-btn { background: #f1f5f9; color: var(--text-muted); border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 0.8rem; font-weight: 700; transition: 0.2s; }
         .nav-btn:hover { background: #e2e8f0; color: var(--text-main); }
-        .nav-btn.logout { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
-
         .container { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
-        .card { background: var(--card-bg); border-radius: 24px; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); margin-bottom: 1.5rem; border: 1px solid #fff; }
+        .card { background: white; border-radius: 24px; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); margin-bottom: 1.5rem; border: 1px solid white; }
 
-        /* --- FORM ELEMENTS --- */
-        label { display: block; margin-bottom: 0.6rem; font-weight: 700; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-        input, select { 
-            width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 14px; 
-            font-size: 1rem; outline: none; margin-bottom: 1.2rem; background: #f8fafc; color: #334155; font-weight: 600;
-            transition: 0.2s;
-        }
-        input:focus, select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-        
+        /* --- FORM --- */
+        label { display: block; margin-bottom: 0.6rem; font-weight: 700; font-size: 0.85rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 14px; font-size: 1rem; outline: none; margin-bottom: 1.2rem; background: #f8fafc; color: #334155; font-weight: 600; transition: 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-        /* --- 3D RADIO BUTTONS (FIXED) --- */
-        .mode-selector { display: flex; gap: 12px; background: #f1f5f9; padding: 6px; border-radius: 16px; margin-bottom: 1.2rem; border: 1px solid #e2e8f0; }
+        
+        /* --- 3D RADIO BUTTONS --- */
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 1.2rem; }
         .mode-option { flex: 1; position: relative; }
-        .mode-option input { opacity: 0; position: absolute; width: 0; height: 0; } /* Hide properly but keep accessible */
-        .mode-label { 
-            display: flex; align-items: center; justify-content: center; gap: 8px; 
-            padding: 12px; border-radius: 12px; cursor: pointer; 
-            font-weight: 700; color: #94a3b8; transition: all 0.2s;
-            border: 2px solid transparent; width: 100%;
-        }
-        /* Style saat tombol dipilih */
-        .mode-option input:checked + .mode-label { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--primary); transform: scale(1.02); }
-        .mode-option input:checked + .mode-label.sendiri { color: #16a34a; border-color: #dcfce7; background: #f0fdf4; }
-        .mode-option input:checked + .mode-label.berdua { color: #7e22ce; border-color: #f3e8ff; background: #faf5ff; }
+        .mode-option input { opacity: 0; position: absolute; }
+        .mode-label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 14px; cursor: pointer; font-weight: 700; color: #94a3b8; background: #f1f5f9; box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0; transition: all 0.1s; transform: translateY(0); width: 100%; }
+        .mode-option input:checked + .mode-label { transform: translateY(4px); box-shadow: none; }
+        .mode-option input:checked + .mode-label.sendiri { background: var(--success); color: white; border-color: var(--success); }
+        .mode-option input:checked + .mode-label.berdua { background: var(--purple); color: white; border-color: var(--purple); }
 
-        /* --- TAB SWITCHER 3D --- */
-        .tab-container { display: flex; gap: 12px; margin-bottom: 25px; }
-        .tab-btn { 
-            flex: 1; padding: 14px; border: none; border-radius: 16px; 
-            font-weight: 800; cursor: pointer; transition: 0.2s; 
-            background: #e2e8f0; color: #94a3b8; font-size: 0.9rem;
-            box-shadow: 0 4px 0 #cbd5e1; transform: translateY(0);
-        }
-        .tab-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
+        /* --- TAB SWITCHER --- */
+        .tab-container { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn { flex: 1; padding: 14px; border: none; border-radius: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; background: #e2e8f0; color: #94a3b8; font-size: 0.85rem; box-shadow: 0 4px 0 #cbd5e1; transform: translateY(0); }
         .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 0 var(--primary-shadow); }
-        .tab-btn.active:active { transform: translateY(4px); box-shadow: 0 0 0 var(--primary-shadow); }
+        .tab-btn:active, .tab-btn.active:active { transform: translateY(4px); box-shadow: none; }
 
-        /* --- BUTTONS --- */
-        .btn-submit { 
-            width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 16px; 
-            font-size: 1.1rem; font-weight: 800; cursor: pointer; 
-            box-shadow: 0 6px 0 var(--primary-shadow); transition: 0.1s; margin-top: 10px;
-        }
-        .btn-submit:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-shadow); }
-        .btn-submit.ujian { background: #10b981; box-shadow: 0 6px 0 #059669; }
-        .btn-submit.ujian:active { box-shadow: 0 0 0 #059669; }
-        .btn-submit:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; transform: translateY(6px); }
-
-        /* --- EXCEL BUTTONS --- */
-        .excel-btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-excel-sheet {
-            flex: 1; text-decoration: none; padding: 12px 10px; border-radius: 12px;
-            font-weight: 700; font-size: 0.85rem; text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            transition: transform 0.1s; box-shadow: 0 4px 0 rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2);
-        }
-        .btn-excel-sheet:active { transform: translateY(4px); box-shadow: none; }
-        .btn-excel-kbm { background: #3b82f6; color: white; box-shadow: 0 4px 0 #2563eb; }
-        .btn-excel-ujian { background: #10b981; color: white; box-shadow: 0 4px 0 #059669; }
-
-        /* Custom Dropdown */
+        /* --- DROPDOWN & LIST --- */
         .form-group { position: relative; margin-bottom: 0.5rem; }
-        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #e2e8f0; border-top: none; z-index: 1000; max-height: 250px; overflow-y: auto; display: none; border-radius: 0 0 16px 16px; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); margin-top: -14px; }
+        .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #e2e8f0; border-top: none; z-index: 1000; max-height: 250px; overflow-y: auto; display: none; border-radius: 0 0 16px 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); margin-top: -14px; }
         .autocomplete-list.show { display: block; }
         .autocomplete-item { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-weight: 600; color: #475569; }
         .autocomplete-item:last-child { border-bottom: none; }
         .autocomplete-item:hover { background: #f8fafc; color: var(--primary); }
 
-        /* Table & Lists */
-        .table-scroll-container { max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; background: #fff; }
+        /* --- TABLE & LISTS --- */
+        .table-scroll-container { max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; background: #fff; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 14px; background: #f8fafc; font-weight: 700; color: #64748b; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 1; }
+        th { text-align: left; padding: 14px; background: #f8fafc; font-weight: 700; color: #64748b; position: sticky; top: 0; z-index: 1; border-bottom: 2px solid #e2e8f0; }
         td { padding: 14px; border-bottom: 1px solid #f1f5f9; font-weight: 500; }
         .master-list-container { max-height: 250px; overflow-y: auto; background: #f8fafc; border-radius: 12px; padding: 10px; margin-top: 10px; border: 1px solid #e2e8f0; }
         .master-item { padding: 12px; background: white; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-weight: 600; color: #334155; }
+        .dash-section { border-left: 4px solid var(--primary); padding-left: 15px; margin-bottom: 15px; }
+        .dash-section.green { border-left-color: var(--success); }
+        .master-tabs { display: flex; gap: 8px; margin: 15px 0; }
 
-        /* Animation */
         @keyframes popUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes dropIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .hidden { display: none !important; }
-        
         @media (max-width: 600px) { 
             .form-row { grid-template-columns: 1fr; gap: 0; } 
             .splash-app-name { font-size: 1.8rem; }
@@ -179,81 +131,87 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 9.9 Mobile Secure</p>
+        <p class="splash-version">Versi 10.2 Mobile Fixed</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
         
         <div style="flex-grow:1;"></div>
-        <button class="btn-start click-sound" onclick="startApp()">MULAI APLIKASI</button>
-        <div style="height: 50px;"></div>
+        <!-- FIXED: Wrapper untuk membatasi lebar tombol di HP -->
+        <div class="btn-start-wrapper">
+            <button class="btn-3d btn-primary" style="border-radius: 50px; font-size: 1.1rem; padding: 18px;" onclick="startApp()">MULAI APLIKASI</button>
+        </div>
+        <div style="height: 40px;"></div>
     </div>
 
     <!-- OVERLAY LOGIN -->
     <div id="overlay" class="hidden">
         <div class="box" id="login-box">
-            <img src="logo.png" onerror="this.style.display='none'" style="width:60px; margin-bottom:10px;">
-            <h3 style="margin-top:0; color:#1e293b;">Login SIREKAP</h3>
+            <img src="logo.png" onerror="this.style.display='none'" style="width:60px; margin-bottom:15px;">
+            <h3 style="margin:0 0 20px 0; color:#1e293b;">Login SIREKAP</h3>
             
             <div id="setup-area" class="hidden" style="margin-top:20px; text-align:left;">
                 <label>Link Google Script</label>
-                <input type="text" id="apiUrl" name="sirekap_api_url_no_remember" placeholder="https://script.google.com/..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <input type="text" id="apiUrl" name="api_url_fix" placeholder="Script URL..." autocomplete="off">
                 <label>Link Spreadsheet</label>
-                <input type="text" id="sheetUrl" name="sirekap_sheet_url_no_remember" placeholder="https://docs.google.com/..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button class="btn-submit click-sound" onclick="saveApi()">Simpan</button>
+                <input type="text" id="sheetUrl" name="sheet_url_fix" placeholder="Sheet URL..." autocomplete="off">
+                <button class="btn-3d btn-primary click-sound" onclick="saveApi()">Simpan</button>
             </div>
 
             <!-- AREA PILIH PERAN -->
-            <div id="role-area" style="margin-top: 25px;">
-                <button id="btn-guru" class="role-btn guru click-sound" onclick="login('guru')">
-                    <span style="font-size:1.5rem;">👨‍🏫</span> <span>Masuk sebagai GURU</span>
+            <div id="role-area">
+                <button id="btn-guru" class="btn-3d btn-white click-sound" style="margin-bottom:15px; justify-content: flex-start;" onclick="login('guru')">
+                    <span style="font-size:1.4rem;">👨‍🏫</span> Masuk sebagai GURU
                 </button>
-                <button id="btn-admin" class="role-btn admin click-sound" onclick="login('admin')">
-                    <span style="font-size:1.5rem;">🔐</span> <span>KEPALA SEKOLAH</span>
+                <button id="btn-admin" class="btn-3d btn-info click-sound" style="margin-bottom:15px; justify-content: flex-start;" onclick="login('admin')">
+                    <span style="font-size:1.4rem;">🔐</span> KEPALA SEKOLAH
                 </button>
                 
-                <!-- PASSWORD AREA DENGAN ANTI-AUTOFILL -->
-                <div id="pass-area" class="hidden" style="margin-top:20px; text-align:left; background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0;">
+                <div id="pass-area" class="hidden" style="margin-top:20px; text-align:left; background:#f8fafc; padding:15px; border-radius:16px; border:1px solid #e2e8f0;">
                     <label>Password Admin</label>
-                    
-                    <!-- INPUT PALSU UNTUK MENIPU BROWSER -->
                     <input style="display:none" type="text" name="fakeusernameremembered"/>
                     <input style="display:none" type="password" name="fakepasswordremembered"/>
-
-                    <input type="password" 
-                           id="adminPass_secure" 
-                           name="sirekap_admin_password_secure_random_id"
-                           placeholder="Ketik password..." 
-                           style="background:white;" 
-                           autocomplete="new-password" 
-                           readonly 
-                           onfocus="this.removeAttribute('readonly');">
-                    
+                    <input type="password" id="adminPass_secure" name="sirekap_pw_safe" placeholder="Ketik password..." style="background:white; margin-bottom:15px;" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');">
                     <div style="display:flex; gap:10px;">
-                        <button class="btn-submit click-sound" style="margin-top:0; flex:2;" onclick="checkAdmin()">Masuk</button>
-                        <button class="nav-btn click-sound" style="flex:1; background:#e2e8f0; border:1px solid #cbd5e1;" onclick="cancelAdmin()">Batal</button>
+                        <button class="btn-3d btn-primary click-sound" onclick="checkAdmin()">Masuk</button>
+                        <button class="btn-3d btn-white click-sound" onclick="cancelAdmin()">Batal</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Ganti Password Overlay -->
+        <div class="box hidden" id="change-pass-box" style="z-index: 10001;">
+            <h3 style="margin:0 0 15px 0;">Ganti Password</h3>
+            <div style="text-align:left;">
+                <label>Password Lama</label>
+                <input type="password" id="oldPass" placeholder="...">
+                <label>Password Baru</label>
+                <input type="password" id="newPass" placeholder="...">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-3d btn-success click-sound" onclick="saveNewPassword()">Simpan</button>
+                <button class="btn-3d btn-danger click-sound" onclick="closeChangePass()">Batal</button>
             </div>
         </div>
     </div>
 
     <!-- NOTIFIKASI -->
-    <div id="notif" style="position:fixed; top:20px; right:20px; background:#16a34a; color:white; padding:15px 20px; border-radius:50px; display:none; z-index:10000; font-weight:700; box-shadow:0 10px 20px rgba(22, 163, 74, 0.3);">Data Tersimpan! ✅</div>
+    <div id="notif" style="position:fixed; top:20px; right:20px; background:#10b981; color:white; padding:15px 25px; border-radius:50px; display:none; z-index:10000; font-weight:700; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);">Data Tersimpan! ✅</div>
 
     <header>
         <div class="header-content">
-            <div><h1 style="font-size: 1.2rem; font-weight:900; letter-spacing:-0.5px;">SIREKAP</h1><p id="status-koneksi" style="font-size: 0.65rem; margin-top:2px; font-weight:600; color:#64748b;">🟡 Offline</p></div>
+            <div><h1 style="font-size: 1.2rem; font-weight:900; letter-spacing:-0.5px; color:var(--primary-dark);">SIREKAP</h1><p id="status-koneksi" style="font-size: 0.65rem; margin-top:2px; font-weight:700; color:#64748b;">🟡 Offline</p></div>
             <div>
                 <!-- MENU ADMIN -->
-                <div id="admin-nav" class="hidden" style="display:flex; gap:5px;">
+                <div id="admin-nav" class="hidden" style="display:flex; gap:8px;">
                     <button class="nav-btn click-sound" onclick="switchView('dashboard')">Dashboard</button>
                     <button class="nav-btn click-sound" onclick="switchView('master')">Master</button>
-                    <button class="nav-btn logout click-sound" onclick="logout()">Keluar</button>
+                    <button class="nav-btn logout click-sound" style="background:#fee2e2; color:#ef4444;" onclick="logout()">Keluar</button>
                 </div>
                 <!-- MENU GURU -->
                 <div id="guru-nav" class="hidden">
-                    <button class="nav-btn logout click-sound" onclick="logout()">Keluar</button>
+                    <button class="nav-btn logout click-sound" style="background:#fee2e2; color:#ef4444;" onclick="logout()">Keluar</button>
                 </div>
             </div>
         </div>
@@ -264,17 +222,16 @@
         <!-- VIEW: FORM INPUT (GURU) -->
         <div id="view-form" class="hidden">
             <div class="card">
-                <!-- TAB SWITCHER 3D -->
                 <div class="tab-container">
                     <button class="tab-btn active click-sound" onclick="switchTab('harian')">📅 Harian</button>
                     <button class="tab-btn click-sound" onclick="switchTab('ujian')">📝 Ujian</button>
                 </div>
 
                 <div style="text-align:right; margin-bottom:15px;">
-                    <button onclick="syncMaster(true)" class="click-sound" style="font-size:0.75rem; background:#f1f5f9; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; color:#64748b; font-weight:700;">🔄 Update Nama Guru</button>
+                    <button id="btn-update-guru" onclick="syncMaster(true)" class="click-sound" style="font-size:0.75rem; background:#eff6ff; border:1px solid #bfdbfe; padding:8px 12px; border-radius:8px; cursor:pointer; color:var(--primary); font-weight:700;">🔄 Update Nama Guru</button>
                 </div>
 
-                <!-- 1. FORM HARIAN (KBM) -->
+                <!-- 1. FORM HARIAN -->
                 <form id="form-harian" onsubmit="submitHarian(event)">
                     <div class="form-row">
                         <div class="form-group"><label>Tanggal</label><input type="date" id="date" required></div>
@@ -321,12 +278,12 @@
                         </div>
                     </div>
                     
-                    <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; background:#fff7ed; padding:10px; border-radius:10px; border:1px solid #ffedd5;">
+                    <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:10px; background:#fff7ed; padding:10px; border-radius:12px; border:1px solid #ffedd5;">
                         <input type="checkbox" id="isSubstitute" style="width:20px; height:20px; margin:0;">
-                        <label for="isSubstitute" style="margin:0; font-size:0.85rem; color:#c2410c;">Saya Guru Pengganti (Badal)</label>
+                        <label for="isSubstitute" style="margin:0; font-size:0.85rem; color:#d97706;">Saya Guru Pengganti (Badal)</label>
                     </div>
                     
-                    <button type="submit" class="btn-submit click-sound">Kirim Laporan KBM</button>
+                    <button type="submit" class="btn-3d btn-primary click-sound">Kirim Laporan KBM</button>
                 </form>
 
                 <!-- 2. FORM UJIAN -->
@@ -338,8 +295,8 @@
                     </div>
 
                     <div class="form-group">
-                        <label style="color:#059669;">Jenis Kegiatan Ujian</label>
-                        <select id="cat_ujian" required onchange="renderUjian()" style="border-color:#059669; background:#ecfdf5; color:#065f46;">
+                        <label style="color:var(--success);">Jenis Kegiatan Ujian</label>
+                        <select id="cat_ujian" required onchange="renderUjian()" style="border-color:var(--success); background:#ecfdf5; color:#065f46;">
                             <option value="" disabled selected>-- Pilih Kegiatan --</option>
                             <option value="mengawas">👀 Mengawas Ujian</option>
                             <option value="tulis_soal">✍️ Menulis Soal</option>
@@ -349,10 +306,9 @@
                         </select>
                     </div>
 
-                    <!-- Input Dinamis Ujian -->
                     <div id="ujian-inputs"></div>
 
-                    <button type="submit" class="btn-submit click-sound ujian" style="margin-top:20px;">Kirim Laporan Ujian</button>
+                    <button type="submit" class="btn-3d btn-success click-sound" style="margin-top:20px;">Kirim Laporan Ujian</button>
                 </form>
             </div>
         </div>
@@ -360,33 +316,29 @@
         <!-- DASHBOARD (ADMIN ONLY) -->
         <div id="view-dashboard" class="hidden">
             <div class="card">
-                <h2>📊 Dashboard</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 style="margin:0;">📊 Dashboard</h2>
+                    <!-- FIXED: Tombol Ganti Password Dikembalikan -->
+                    <button onclick="openChangePass()" class="nav-btn click-sound" style="background:#fff; border:1px solid #cbd5e1; font-weight:700;">🔒 Ganti Password</button>
+                </div>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button onclick="fetchData()" class="btn-submit click-sound" style="margin:0; font-size:0.9rem; flex:1;">🔄 Refresh</button>
+                    <button onclick="fetchData()" class="btn-3d btn-primary click-sound">🔄 Refresh Data</button>
                 </div>
-                
-                <!-- DUA TOMBOL EXCEL TERPISAH -->
-                <div class="excel-btn-group">
-                    <a id="btn-open-kbm" href="#" target="_blank" class="btn-excel-sheet btn-excel-kbm click-sound">📂 Data KBM</a>
-                    <a id="btn-open-ujian" href="#" target="_blank" class="btn-excel-sheet btn-excel-ujian click-sound">📂 Data Ujian</a>
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <a id="btn-open-kbm" href="#" target="_blank" class="btn-3d btn-info click-sound" style="text-decoration:none;">📂 Data KBM</a>
+                    <a id="btn-open-ujian" href="#" target="_blank" class="btn-3d btn-success click-sound" style="text-decoration:none;">📂 Data Ujian</a>
                 </div>
-                
-                <!-- SECTION KBM HARIAN -->
-                <div class="dash-header">
-                    <h3>Absensi KBM Harian</h3>
+                <div class="dash-section">
+                    <div class="dash-header"><h3>Absensi KBM Harian</h3></div>
+                    <div class="table-scroll-container">
+                        <table id="dash-table-kbm"><thead><tr><th>Tgl</th><th>Guru</th><th>Detail</th><th>Jam</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;padding:20px;">Loading...</td></tr></tbody></table>
+                    </div>
                 </div>
-                <div class="table-scroll-container">
-                    <table id="dash-table-kbm"><thead><tr><th>Tgl</th><th>Guru</th><th>Detail</th><th>Jam</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:#999; padding:20px;">Memuat data...</td></tr></tbody></table>
-                </div>
-
-                <div style="height:20px;"></div>
-
-                <!-- SECTION UJIAN -->
-                <div class="dash-header">
-                    <h3 style="color:#059669;">Absensi Ujian Semester</h3>
-                </div>
-                <div class="table-scroll-container" style="border-color:#059669;">
-                    <table id="dash-table-ujian"><thead><tr><th>Tgl</th><th>Guru</th><th>Kegiatan</th><th>Vol</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;color:#999; padding:20px;">Memuat data...</td></tr></tbody></table>
+                <div class="dash-section green">
+                    <div class="dash-header"><h3 style="color:var(--success);">Absensi Ujian Semester</h3></div>
+                    <div class="table-scroll-container" style="border-color:var(--success);">
+                        <table id="dash-table-ujian"><thead><tr><th>Tgl</th><th>Guru</th><th>Kegiatan</th><th>Vol</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;padding:20px;">Loading...</td></tr></tbody></table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -395,21 +347,20 @@
         <div id="view-master" class="hidden">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="margin:0;">🗂️ Master Data</h2>
-                    <button class="nav-btn click-sound" onclick="saveMasterToCloud()" style="background:#16a34a; color:white;">💾 Simpan Cloud</button>
+                    <h2 style="margin:0;">🗂️ Data Master</h2>
+                    <button class="btn-3d btn-success click-sound" style="width:auto; padding:10px 15px;" onclick="saveMasterToCloud()">💾 Simpan Cloud</button>
                 </div>
-                <p style="font-size:0.8rem; color:#64748b; margin-top:5px;">Kelola daftar nama agar muncul di HP Guru.</p>
-                
-                <div style="display:flex; gap:8px; margin:20px 0;">
-                    <button class="nav-btn click-sound" style="background:#e2e8f0; color:#475569; flex:1;" onclick="renderMaster('guru')">Guru</button>
-                    <button class="nav-btn click-sound" style="background:#e2e8f0; color:#475569; flex:1;" onclick="renderMaster('mapel')">Mapel</button>
-                    <button class="nav-btn click-sound" style="background:#e2e8f0; color:#475569; flex:1;" onclick="renderMaster('kelas')">Kelas</button>
+                <p style="font-size:0.8rem; color:#64748b; margin-top:5px; margin-bottom:20px;">Kelola daftar nama agar muncul di HP Guru.</p>
+                <div class="master-tabs">
+                    <button class="btn-3d btn-info click-sound" onclick="renderMaster('guru')">Guru</button>
+                    <button class="btn-3d btn-purple click-sound" onclick="renderMaster('mapel')">Mapel</button>
+                    <button class="btn-3d btn-warning click-sound" onclick="renderMaster('kelas')">Kelas</button>
                 </div>
-                
-                <h4 id="master-title" style="color:var(--primary);">Daftar Guru</h4>
+                <h4 id="master-title" style="color:var(--text-main); margin-bottom:10px; font-size:1.1rem; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">Daftar Guru</h4>
+                <input type="text" id="search-master" class="search-bar" placeholder="🔍 Cari data..." oninput="filterMasterDisplay()">
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <input type="text" id="new-master" placeholder="Tambah..." style="margin:0; flex:1;">
-                    <button class="btn-submit click-sound" style="margin:0; width:auto; padding:0 20px;" onclick="addMaster()">+</button>
+                    <input type="text" id="new-master" placeholder="Tambah baru..." style="margin:0; flex:1;">
+                    <button class="btn-3d btn-primary click-sound" style="width:auto; padding:0 20px;" onclick="addMaster()">+</button>
                 </div>
                 <div class="master-list-container"><div id="master-list"></div></div>
             </div>
@@ -418,14 +369,12 @@
     </div>
 
     <script>
-        // --- STATE & CONFIG ---
         let API_URL = localStorage.getItem('sirekap_api') || "https://script.google.com/macros/s/AKfycbx6QpLttVeXSHdovQJRgwccd1xTHrbNqMpP07-xeu-TfAcQQOzVheQsvJEYJ2feUJsi/exec";
         let SHEET_URL = localStorage.getItem('sirekap_sheet') || "https://docs.google.com/spreadsheets/d/18cRCNqXK860SYVmTDjlyabnL6fgh2sWdTMEG3_Ahpyw/edit?usp=sharing";
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
         let currentMasterType = 'guru';
 
-        // --- INIT ---
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
             const now = new Date();
@@ -434,29 +383,29 @@
             const savedM = localStorage.getItem('sirekap_master');
             if(savedM) MASTER = JSON.parse(savedM);
 
+            const lastGuru = localStorage.getItem('sirekap_last_guru');
+            if (lastGuru) {
+                document.getElementById('guru').value = lastGuru;
+                document.getElementById('guru_ujian').value = lastGuru;
+            }
+
             if(API_URL) {
                 document.getElementById('status-koneksi').textContent = "🟢 Online";
-                syncMaster();
+                syncMaster(); 
             }
             if(SHEET_URL) {
                 document.getElementById('btn-open-kbm').href = SHEET_URL;
                 document.getElementById('btn-open-ujian').href = SHEET_URL;
             }
-
             document.querySelectorAll('.click-sound').forEach(b => b.addEventListener('click', playClick));
-            
-            // Hide autocomplete on click outside
             document.addEventListener('click', e => { 
                 if(!e.target.matches('input')) document.querySelectorAll('.autocomplete-list').forEach(l=>l.style.display='none'); 
             });
         });
 
-        // --- SPLASH & START ---
         function startApp() {
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('overlay').classList.remove('hidden');
-            
-            // Check Setup
             if(API_URL) {
                 document.getElementById('setup-area').classList.add('hidden');
                 document.getElementById('role-area').classList.remove('hidden');
@@ -466,7 +415,22 @@
             }
         }
 
-        // --- LOGIN LOGIC ---
+        // --- FIXED LOGOUT LOGIC ---
+        function logout() {
+            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
+            document.getElementById('admin-nav').classList.add('hidden');
+            document.getElementById('guru-nav').classList.add('hidden');
+            
+            document.getElementById('btn-guru').style.display = 'inline-flex';
+            document.getElementById('btn-admin').style.display = 'inline-flex';
+            
+            document.getElementById('pass-area').classList.add('hidden');
+            document.getElementById('adminPass_secure').value = '';
+            
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('splash-screen').style.display = 'flex';
+        }
+
         function login(role) { 
             if(role === 'guru') {
                document.getElementById('overlay').classList.add('hidden');
@@ -474,19 +438,23 @@
                document.getElementById('guru-nav').classList.remove('hidden');
                syncMaster();
             } else {
-               document.getElementById('btn-guru').classList.add('hidden');
+               document.getElementById('btn-guru').style.display = 'none';
+               document.getElementById('btn-admin').style.display = 'none';
                document.getElementById('pass-area').classList.remove('hidden');
             }
         }
 
         function cancelAdmin() {
-            document.getElementById('btn-guru').classList.remove('hidden');
+            document.getElementById('btn-guru').style.display = 'inline-flex';
+            document.getElementById('btn-admin').style.display = 'inline-flex';
             document.getElementById('pass-area').classList.add('hidden');
             document.getElementById('adminPass_secure').value = '';
         }
+
+        function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
         
         function checkAdmin() { 
-            if(document.getElementById('adminPass_secure').value===ADMIN_PASS) { 
+            if(document.getElementById('adminPass_secure').value===getAdminPass()) { 
                 document.getElementById('overlay').classList.add('hidden'); 
                 document.getElementById('admin-nav').classList.remove('hidden'); 
                 switchView('dashboard'); 
@@ -495,186 +463,20 @@
             } else alert("Password Salah"); 
         }
 
-        function logout() {
-            // Reset state UI
-            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
-            document.getElementById('admin-nav').classList.add('hidden');
-            document.getElementById('guru-nav').classList.add('hidden');
-            
-            // Reset Login Modal State
-            document.getElementById('btn-guru').classList.remove('hidden');
-            document.getElementById('pass-area').classList.add('hidden');
-            document.getElementById('adminPass_secure').value = '';
-            
-            // Show Splash
-            document.getElementById('overlay').classList.add('hidden');
-            document.getElementById('splash-screen').style.display = 'flex';
-        }
+        function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
+        function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
+        function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses!");closeChangePass();} else alert("Gagal"); }
 
-        // --- TABS & UJIAN LOGIC ---
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if(tab === 'harian') {
-                document.getElementById('form-harian').classList.remove('hidden');
-                document.getElementById('form-ujian').classList.add('hidden');
-            } else {
-                document.getElementById('form-harian').classList.add('hidden');
-                document.getElementById('form-ujian').classList.remove('hidden');
-                const g = document.getElementById('guru').value;
-                if(g) setTimeout(() => { if(document.getElementById('guru_ujian')) document.getElementById('guru_ujian').value = g; }, 100);
-            }
-        }
-
-        function renderUjian() {
-            const cat = document.getElementById('cat_ujian').value;
-            const container = document.getElementById('ujian-inputs');
-            container.innerHTML = '';
-
-            const inMapel = `<div class="form-group"><label>Mapel</label><input type="text" id="mapel_ujian" oninput="filterList('list-mapel-ujian', 'mapel_ujian')" onfocus="filterList('list-mapel-ujian', 'mapel_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-mapel-ujian"></ul></div>`;
-            const inKelas = `<div class="form-group"><label>Kelas</label><input type="text" id="kelas_ujian" oninput="filterList('list-kelas-ujian', 'kelas_ujian')" onfocus="filterList('list-kelas-ujian', 'kelas_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-kelas-ujian"></ul></div>`;
-
-            let html = '';
-            if(cat === 'mengawas') {
-                html += inMapel + inKelas + `<div class="form-group"><label>Jumlah (Mapel/Sesi)</label><input type="number" id="vol_u" value="1"></div>`;
-            } else if (cat === 'tulis_soal') {
-                // FIXED: Menambahkan Kelas untuk Tulis Soal
-                html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Paket Soal</label><input type="number" id="vol_u" value="1"></div>`;
-            } else if (cat === 'periksa' || cat === 'praktik') {
-                html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Siswa</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`;
-            } else if (cat === 'rapor') {
-                html += inKelas + `<div class="form-group"><label>Jumlah Rapor (Siswa)</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`;
-            }
-            container.innerHTML = html;
-        }
-
-        function submitUjian(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const cat = document.getElementById('cat_ujian').value;
-            const guru = document.getElementById('guru_ujian').value;
-            const vol = document.getElementById('vol_u').value;
-            
-            let details = [];
-            if(document.getElementById('mapel_ujian')) details.push(document.getElementById('mapel_ujian').value);
-            if(document.getElementById('kelas_ujian')) details.push(document.getElementById('kelas_ujian').value);
-            
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru harus ada di daftar (Hubungi Kepala Sekolah).");
-            if(document.getElementById('mapel_ujian') && !MASTER.mapel.includes(document.getElementById('mapel_ujian').value)) return alert("Mapel harus ada di daftar.");
-            if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas harus ada di daftar.");
-
-            sendData({
-                action: 'insert_ujian',
-                ID: Date.now(),
-                Tanggal: document.getElementById('date').value,
-                Guru: guru,
-                Kategori: cat.toUpperCase(),
-                Rincian: details.join(', '),
-                Volume: vol,
-                Nominal: 0 
-            }, btn, 'ujian');
-        }
-
-        function submitHarian(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const guru = document.getElementById('guru').value;
-            const mapel = document.getElementById('mapel').value;
-            const kelas = document.getElementById('kelas').value;
-            const mode = document.querySelector('input[name="mode"]:checked').value;
-            const jam = document.getElementById('hours').value;
-
-            // VALIDASI KETAT
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru harus ada di daftar (Hubungi Kepala Sekolah).");
-            if(!MASTER.mapel.includes(mapel)) return alert("Mapel harus ada di daftar.");
-            if(!MASTER.kelas.includes(kelas)) return alert("Kelas harus ada di daftar.");
-
-            sendData({
-                action: 'insert',
-                ID: Date.now(),
-                Tanggal: document.getElementById('date').value,
-                Waktu: document.getElementById('time').value,
-                Guru: guru,
-                Status: document.getElementById('isSubstitute').checked ? 'Badal' : 'Tetap',
-                Mapel: mapel,
-                Kelas: kelas,
-                Mode: mode,
-                'Jam Sendiri': mode=='sendiri' ? jam : 0,
-                'Jam Team': mode=='berdua' ? jam : 0
-            }, btn, 'harian');
-        }
-
-        function sendData(payload, btn, type) {
-            btn.disabled = true;
-            btn.textContent = "Mengirim...";
-            const fd = new FormData();
-            for(let k in payload) fd.append(k, payload[k]);
-
-            fetch(API_URL, { method:'POST', body:fd })
-            .then(r=>r.json()).then(d=>{
-                if(d.result==='success') {
-                    document.getElementById('notif').style.display='block';
-                    setTimeout(()=>document.getElementById('notif').style.display='none',3000);
-                    // RESET FORM AFTER SUCCESS (Empty Inputs)
-                    if(type === 'harian') {
-                        document.getElementById('guru').value = '';
-                        document.getElementById('mapel').value = '';
-                        document.getElementById('kelas').value = '';
-                        document.getElementById('isSubstitute').checked = false;
-                        document.getElementById('hours').value = '1';
-                    } else {
-                        document.getElementById('guru_ujian').value = '';
-                        if(document.getElementById('mapel_ujian')) document.getElementById('mapel_ujian').value = '';
-                        if(document.getElementById('kelas_ujian')) document.getElementById('kelas_ujian').value = '';
-                        document.getElementById('vol_u').value = '';
-                        document.getElementById('cat_ujian').value = '';
-                        document.getElementById('ujian-inputs').innerHTML = '';
-                    }
-                } else alert("Gagal");
-            })
-            .catch(()=>alert("Error"))
-            .finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
-        }
-
-        // --- FILTER & UTILS ---
-        function filterList(listId, inputId) {
-            const list = document.getElementById(listId);
-            const input = document.getElementById(inputId);
-            const val = input.value.toLowerCase();
-            
-            let data = [];
-            if(listId.includes('guru')) data = MASTER.guru;
-            else if(listId.includes('mapel')) data = MASTER.mapel;
-            else if(listId.includes('kelas')) data = MASTER.kelas;
-
-            list.innerHTML = '';
-            
-            const filtered = data.filter(item => item.toLowerCase().includes(val));
-            
-            if(filtered.length === 0) {
-                list.innerHTML = '<li style="padding:10px; color:red;">Tidak ditemukan. Hubungi Admin.</li>';
-            } else {
-                filtered.sort().forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = 'autocomplete-item';
-                    li.textContent = item;
-                    li.onmousedown = () => { 
-                        input.value = item;
-                        list.style.display='none';
-                        playClick();
-                    };
-                    list.appendChild(li);
-                });
-            }
-            list.style.display = 'block';
-        }
-
+        function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
+        function saveApi() { localStorage.setItem('sirekap_api', document.getElementById('apiUrl').value); localStorage.setItem('sirekap_sheet', document.getElementById('sheetUrl').value); location.reload(); }
+        function showSetup() { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); }
+        
         function syncMaster(v) {
             if(!API_URL) return;
-            if(v) event.target.textContent = "...";
+            const btnUpdate = document.getElementById('btn-update-guru');
+            if(v && btnUpdate) { btnUpdate.textContent = "..."; btnUpdate.disabled = true; }
             fetch(API_URL+"?action=get_master").then(r=>r.json()).then(d=>{
-                if(d.result==='success') {
+                if(d.result==='success'){ 
                     if(d.teachers.length) MASTER.guru = d.teachers;
                     if(d.subjects.length) MASTER.mapel = d.subjects;
                     if(d.classes.length) MASTER.kelas = d.classes;
@@ -682,55 +484,97 @@
                     if(currentMasterType && !document.getElementById('view-master').classList.contains('hidden')) renderMaster(currentMasterType);
                     if(v) alert("Update Berhasil!");
                 }
-            }).finally(()=>{ if(v) event.target.textContent = "🔄 Update Nama"; });
+            }).catch(e => console.log(e)).finally(()=>{ if(v && btnUpdate) { btnUpdate.textContent = "🔄 Update Nama Guru"; btnUpdate.disabled = false; } });
         }
 
         function renderMaster(type) {
             currentMasterType = type;
             document.getElementById('master-title').textContent = "Daftar " + type.toUpperCase();
-            document.querySelectorAll('#view-master .nav-btn').forEach(b => b.style.background = '#e2e8f0'); // reset color
-            event.target.style.background = '#bfdbfe'; // active color
-            const list = document.getElementById('master-list');
-            list.innerHTML = '';
-            MASTER[type].sort().forEach((item,idx) => {
-                list.innerHTML += `<div class="master-item">${item} <button class="btn-mini" onclick="delMaster('${type}',${idx})">✕</button></div>`;
-            });
+            document.getElementById('search-master').value = ''; 
+            const list = document.getElementById('master-list'); list.innerHTML = '';
+            MASTER[type].sort().forEach((item,idx) => { list.innerHTML += `<div class="master-item"><span>${item}</span> <button class="btn-3d btn-danger" style="width:auto; padding:5px 10px;" onclick="delMaster('${type}',${idx})">✕</button></div>`; });
         }
         function addMaster() {
             const v = document.getElementById('new-master').value.trim();
-            if(v) { MASTER[currentMasterType].push(v); renderMaster(currentMasterType); document.getElementById('new-master').value=''; }
+            if(v) { MASTER[currentMasterType].push(v); renderMaster(currentMasterType); document.getElementById('new-master').value=''; saveMasterToCloud(true); }
         }
-        function delMaster(t,i) { if(confirm("Hapus?")) { MASTER[t].splice(i,1); renderMaster(t); } }
-        function saveMasterToCloud() {
+        function delMaster(t,i) { if(confirm("Hapus?")) { MASTER[t].splice(i,1); renderMaster(t); saveMasterToCloud(true); } }
+        function saveMasterToCloud(silent = false) {
             const fd = new FormData(); fd.append('action','save_master');
             fd.append('teachers', JSON.stringify(MASTER.guru)); fd.append('subjects', JSON.stringify(MASTER.mapel)); fd.append('classes', JSON.stringify(MASTER.kelas));
-            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>alert(d.result==='success'?"Tersimpan!":"Gagal"));
+            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success'){localStorage.setItem('sirekap_master',JSON.stringify(MASTER)); if(!silent) showNotif("Data Master Tersimpan!"); } else if(!silent) alert("Gagal Simpan"); });
         }
         
+        function filterList(listId, inputId) {
+            const list = document.getElementById(listId);
+            const input = document.getElementById(inputId);
+            const val = input.value.toLowerCase();
+            let data = [];
+            if(listId.includes('guru')) data = MASTER.guru; else if(listId.includes('mapel')) data = MASTER.mapel; else if(listId.includes('kelas')) data = MASTER.kelas;
+            list.innerHTML = '';
+            const filtered = data.filter(item => item.toLowerCase().includes(val));
+            if(filtered.length === 0) list.innerHTML = '<li style="padding:10px; color:red;">Tidak ditemukan. Hubungi Admin.</li>';
+            else filtered.sort().forEach(item => { const li = document.createElement('li'); li.className = 'autocomplete-item'; li.textContent = item; li.onmousedown = () => { input.value = item; list.style.display='none'; playClick(); }; list.appendChild(li); });
+            list.style.display = 'block';
+        }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active');
+            if(tab === 'harian') { document.getElementById('form-harian').classList.remove('hidden'); document.getElementById('form-ujian').classList.add('hidden'); }
+            else { document.getElementById('form-harian').classList.add('hidden'); document.getElementById('form-ujian').classList.remove('hidden'); const g=document.getElementById('guru').value; if(g) setTimeout(()=>{if(document.getElementById('guru_ujian'))document.getElementById('guru_ujian').value=g},100); }
+        }
+        function renderUjian() {
+            const cat = document.getElementById('cat_ujian').value;
+            const container = document.getElementById('ujian-inputs');
+            container.innerHTML = '';
+            const inMapel = `<div class="form-group"><label>Mapel</label><input type="text" id="mapel_ujian" oninput="filterList('list-mapel-ujian', 'mapel_ujian')" onfocus="filterList('list-mapel-ujian', 'mapel_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-mapel-ujian"></ul></div>`;
+            const inKelas = `<div class="form-group"><label>Kelas</label><input type="text" id="kelas_ujian" oninput="filterList('list-kelas-ujian', 'kelas_ujian')" onfocus="filterList('list-kelas-ujian', 'kelas_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-kelas-ujian"></ul></div>`;
+            let html = '';
+            if(cat === 'mengawas') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah (Mapel/Sesi)</label><input type="number" id="vol_u" value="1"></div>`; }
+            else if (cat === 'tulis_soal') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Paket Soal</label><input type="number" id="vol_u" value="1"></div>`; }
+            else if (cat === 'periksa' || cat === 'praktik') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Siswa</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
+            else if (cat === 'rapor') { html += inKelas + `<div class="form-group"><label>Jumlah Rapor (Siswa)</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
+            container.innerHTML = html;
+        }
+        function submitUjian(e) {
+            e.preventDefault(); const btn=e.target.querySelector('button');
+            const cat=document.getElementById('cat_ujian').value, guru=document.getElementById('guru_ujian').value, vol=document.getElementById('vol_u').value;
+            let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
+            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
+            if(document.getElementById('mapel_ujian') && !MASTER.mapel.includes(document.getElementById('mapel_ujian').value)) return alert("Mapel tidak terdaftar!");
+            if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas tidak terdaftar!");
+            localStorage.setItem('sirekap_last_guru', guru);
+            sendData({action:'insert_ujian', ID:Date.now(), Tanggal:document.getElementById('date').value, Guru:guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0}, btn, 'ujian');
+        }
+        function submitHarian(e) {
+            e.preventDefault(); const btn=e.target.querySelector('button');
+            const guru=document.getElementById('guru').value, mapel=document.getElementById('mapel').value, kelas=document.getElementById('kelas').value;
+            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
+            if(!MASTER.mapel.includes(mapel)) return alert("Mapel tidak terdaftar!");
+            if(!MASTER.kelas.includes(kelas)) return alert("Kelas tidak terdaftar!");
+            localStorage.setItem('sirekap_last_guru', guru);
+            sendData({action:'insert', ID:Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, Guru:guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0}, btn, 'harian');
+        }
+        function sendData(p, btn, type) {
+            btn.disabled=true; btn.textContent="Mengirim...";
+            const fd=new FormData(); for(let k in p) fd.append(k, p[k]);
+            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                if(d.result==='success') {
+                    showNotif("Data Tersimpan! ✅");
+                    if(type==='harian'){ document.getElementById('mapel').value=''; document.getElementById('kelas').value=''; document.getElementById('isSubstitute').checked=false; document.getElementById('hours').value='1'; }
+                    else { document.getElementById('guru_ujian').value=''; if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
+                } else alert("Gagal");
+            }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
+        }
         function fetchData() {
-            // Get KBM
-            fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{
-                const tb = document.querySelector('#dash-table-kbm tbody'); tb.innerHTML='';
-                if(d.data && d.data.length > 0) {
-                    d.data.slice(0,50).forEach(r => {
-                        tb.innerHTML += `<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;
-                    });
-                } else { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data</td></tr>'; }
-            });
-            // Get Ujian
-            fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{
-                const tb = document.querySelector('#dash-table-ujian tbody'); tb.innerHTML='';
-                if(d.data && d.data.length > 0) {
-                    d.data.slice(0,50).forEach(r => {
-                        tb.innerHTML += `<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;
-                    });
-                } else { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada data</td></tr>'; }
-            });
+            fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-kbm tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0)d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'; });
+            fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-ujian tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0)d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'; });
         }
-        
-        function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
-        function saveApi() { localStorage.setItem('sirekap_api', document.getElementById('apiUrl').value); localStorage.setItem('sirekap_sheet', document.getElementById('sheetUrl').value); location.reload(); }
-        function showSetup() { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); }
+        function filterMasterDisplay() {
+            const query = document.getElementById('search-master').value.toLowerCase();
+            const items = document.querySelectorAll('.master-item');
+            items.forEach(item => { const text = item.querySelector('span').textContent.toLowerCase(); item.style.display = text.includes(query) ? 'flex' : 'none'; });
+        }
+        function showNotif(msg) { const n = document.getElementById('notif'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none', 2000); }
         const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
         function playClick(){ if(audioCtx.state==='suspended')audioCtx.resume(); const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.00001,audioCtx.currentTime+0.1);o.stop(audioCtx.currentTime+0.1); }
     </script>
