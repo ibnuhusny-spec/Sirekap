@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v10.2 - Final Polish</title>
+    <title>SIREKAP v10.5.1 - Final Perfect</title>
     <style>
         :root {
-            /* Palette Warna */
+            /* Palette Warna Premium */
             --primary: #4f46e5; --primary-dark: #4338ca; --primary-shadow: #312e81;
             --success: #10b981; --success-shadow: #047857;
             --danger: #ef4444; --danger-shadow: #b91c1c;
@@ -26,20 +26,20 @@
 
         /* --- CLASS TOMBOL 3D --- */
         .btn-3d {
-            border: none; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem; font-weight: 700; color: white;
+            border: none; border-radius: 12px; padding: 12px 20px; font-size: 0.95rem; font-weight: 700; color: white !important;
             cursor: pointer; transition: all 0.1s; position: relative; top: 0; text-decoration: none;
             display: inline-flex; justify-content: center; align-items: center; gap: 8px; width: 100%;
         }
         .btn-3d:active { top: 4px; box-shadow: none !important; }
         .btn-3d:disabled { background: #94a3b8 !important; box-shadow: none !important; top: 4px; cursor: not-allowed; }
-
+        
         .btn-primary { background: var(--primary); box-shadow: 0 4px 0 var(--primary-shadow); }
         .btn-success { background: var(--success); box-shadow: 0 4px 0 var(--success-shadow); }
         .btn-danger  { background: var(--danger);  box-shadow: 0 4px 0 var(--danger-shadow); }
         .btn-warning { background: var(--warning); box-shadow: 0 4px 0 var(--warning-shadow); }
         .btn-info    { background: var(--info);    box-shadow: 0 4px 0 var(--info-shadow); }
         .btn-purple  { background: var(--purple);  box-shadow: 0 4px 0 var(--purple-shadow); }
-        .btn-white   { background: white; color: var(--text-main); box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0; }
+        .btn-white   { background: white; color: var(--text-main) !important; box-shadow: 0 4px 0 #cbd5e1; border: 1px solid #e2e8f0; }
 
         /* --- SPLASH SCREEN --- */
         #splash-screen {
@@ -62,7 +62,6 @@
         .splash-school { font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 5px 0; line-height: 1.4; }
         .splash-sub { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* FIX TOMBOL MULAI AGAR TIDAK MELEBAR */
         .btn-start-wrapper { width: 100%; max-width: 280px; } 
 
         /* --- OVERLAY & LOGIN --- */
@@ -116,6 +115,17 @@
         .dash-section { border-left: 4px solid var(--primary); padding-left: 15px; margin-bottom: 15px; }
         .dash-section.green { border-left-color: var(--success); }
         .master-tabs { display: flex; gap: 8px; margin: 15px 0; }
+        .search-bar { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; margin-bottom: 10px; background: #f8fafc; outline: none; transition: 0.2s; }
+        .search-bar:focus { border-color: var(--primary); background: white; }
+
+        /* --- HISTORY ITEM --- */
+        .history-item { background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .history-info { font-size: 0.85rem; color: #0369a1; }
+        .history-actions { display: flex; gap: 8px; }
+        .btn-icon { width: 32px; height: 32px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: transform 0.1s; }
+        .btn-icon:active { transform: scale(0.9); }
+        .btn-edit-item { background: #fbbf24; color: white; box-shadow: 0 2px 0 #d97706; }
+        .btn-del-item { background: #ef4444; color: white; box-shadow: 0 2px 0 #b91c1c; }
 
         @keyframes popUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         .hidden { display: none !important; }
@@ -131,13 +141,12 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 10.2 Mobile Fixed</p>
+        <p class="splash-version">Versi 10.5.1 Final Perfect</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
         
         <div style="flex-grow:1;"></div>
-        <!-- FIXED: Wrapper untuk membatasi lebar tombol di HP -->
         <div class="btn-start-wrapper">
             <button class="btn-3d btn-primary" style="border-radius: 50px; font-size: 1.1rem; padding: 18px;" onclick="startApp()">MULAI APLIKASI</button>
         </div>
@@ -152,9 +161,9 @@
             
             <div id="setup-area" class="hidden" style="margin-top:20px; text-align:left;">
                 <label>Link Google Script</label>
-                <input type="text" id="apiUrl" name="api_url_fix" placeholder="Script URL..." autocomplete="off">
+                <input type="text" id="apiUrl" name="sirekap_api_url_no_remember" placeholder="https://script.google.com/..." autocomplete="off">
                 <label>Link Spreadsheet</label>
-                <input type="text" id="sheetUrl" name="sheet_url_fix" placeholder="Sheet URL..." autocomplete="off">
+                <input type="text" id="sheetUrl" name="sirekap_sheet_url_no_remember" placeholder="https://docs.google.com/..." autocomplete="off">
                 <button class="btn-3d btn-primary click-sound" onclick="saveApi()">Simpan</button>
             </div>
 
@@ -231,8 +240,11 @@
                     <button id="btn-update-guru" onclick="syncMaster(true)" class="click-sound" style="font-size:0.75rem; background:#eff6ff; border:1px solid #bfdbfe; padding:8px 12px; border-radius:8px; cursor:pointer; color:var(--primary); font-weight:700;">🔄 Update Nama Guru</button>
                 </div>
 
-                <!-- 1. FORM HARIAN -->
+                <!-- FORM HARIAN -->
                 <form id="form-harian" onsubmit="submitHarian(event)">
+                    <!-- Hidden field for Editing ID -->
+                    <input type="hidden" id="edit_id_harian">
+                    
                     <div class="form-row">
                         <div class="form-group"><label>Tanggal</label><input type="date" id="date" required></div>
                         <div class="form-group"><label>Waktu</label><input type="time" id="time" required></div>
@@ -240,7 +252,7 @@
                     
                     <div class="form-group">
                         <label>Nama Guru</label>
-                        <input type="text" id="guru" placeholder="Ketik nama Anda..." required oninput="filterList('list-guru', 'guru')" onfocus="filterList('list-guru', 'guru')" autocomplete="off">
+                        <input type="text" id="guru" placeholder="Ketik nama Anda..." required oninput="filterList('list-guru', 'guru'); fetchMyHistory();" onfocus="filterList('list-guru', 'guru')" autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru"></ul>
                     </div>
 
@@ -260,7 +272,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Jumlah Jam (JP)</label>
-                            <select id="hours" required><option value="1">1 Jam</option><option value="2">2 Jam</option><option value="3">3 Jam</option><option value="4">4 Jam</option></select>
+                            <select id="hours" required>
+                                <option value="1">1 Jam</option>
+                                <option value="2">2 Jam</option>
+                                <option value="3">3 Jam</option>
+                                <option value="4">4 Jam</option>
+                                <option value="5">5 Jam</option> <!-- Ditambahkan opsi 5 Jam -->
+                            </select>
                         </div>
                     </div>
 
@@ -283,14 +301,20 @@
                         <label for="isSubstitute" style="margin:0; font-size:0.85rem; color:#d97706;">Saya Guru Pengganti (Badal)</label>
                     </div>
                     
-                    <button type="submit" class="btn-3d btn-primary click-sound">Kirim Laporan KBM</button>
+                    <div style="display:flex; gap:10px;">
+                        <button type="submit" id="btn-submit-harian" class="btn-3d btn-primary click-sound">Kirim Laporan KBM</button>
+                        <button type="button" id="btn-cancel-harian" onclick="cancelEdit('harian')" class="btn-3d btn-white click-sound hidden" style="width:auto;">Batal</button>
+                    </div>
                 </form>
 
-                <!-- 2. FORM UJIAN -->
+                <!-- FORM UJIAN -->
                 <form id="form-ujian" class="hidden" onsubmit="submitUjian(event)">
+                    <!-- Hidden field for Editing ID -->
+                    <input type="hidden" id="edit_id_ujian">
+
                     <div class="form-group">
                         <label>Nama Guru</label>
-                        <input type="text" id="guru_ujian" placeholder="Ketik nama Anda..." oninput="filterList('list-guru-ujian', 'guru_ujian')" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
+                        <input type="text" id="guru_ujian" placeholder="Ketik nama Anda..." oninput="filterList('list-guru-ujian', 'guru_ujian'); fetchMyHistory();" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru-ujian"></ul>
                     </div>
 
@@ -308,8 +332,19 @@
 
                     <div id="ujian-inputs"></div>
 
-                    <button type="submit" class="btn-3d btn-success click-sound" style="margin-top:20px;">Kirim Laporan Ujian</button>
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button type="submit" id="btn-submit-ujian" class="btn-3d btn-success click-sound">Kirim Laporan Ujian</button>
+                        <button type="button" id="btn-cancel-ujian" onclick="cancelEdit('ujian')" class="btn-3d btn-white click-sound hidden" style="width:auto;">Batal</button>
+                    </div>
                 </form>
+
+                <!-- RIWAYAT SAYA -->
+                <div id="my-history" style="margin-top:30px; border-top:2px dashed #e2e8f0; padding-top:20px;">
+                    <h4 style="margin:0 0 10px 0; color:#64748b;">Riwayat Input Terakhir Saya</h4>
+                    <div id="history-list">
+                        <p style="font-size:0.8rem; color:#94a3b8; font-style:italic;">Belum ada data / Pilih nama guru dulu.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -318,7 +353,6 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2 style="margin:0;">📊 Dashboard</h2>
-                    <!-- FIXED: Tombol Ganti Password Dikembalikan -->
                     <button onclick="openChangePass()" class="nav-btn click-sound" style="background:#fff; border:1px solid #cbd5e1; font-weight:700;">🔒 Ganti Password</button>
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
@@ -374,6 +408,7 @@
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
         let currentMasterType = 'guru';
+        let myHistoryData = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
@@ -415,21 +450,8 @@
             }
         }
 
-        // --- FIXED LOGOUT LOGIC ---
-        function logout() {
-            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
-            document.getElementById('admin-nav').classList.add('hidden');
-            document.getElementById('guru-nav').classList.add('hidden');
-            
-            document.getElementById('btn-guru').style.display = 'inline-flex';
-            document.getElementById('btn-admin').style.display = 'inline-flex';
-            
-            document.getElementById('pass-area').classList.add('hidden');
-            document.getElementById('adminPass_secure').value = '';
-            
-            document.getElementById('overlay').classList.add('hidden');
-            document.getElementById('splash-screen').style.display = 'flex';
-        }
+        // --- LOGIN & PASSWORD LOGIC ---
+        function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
 
         function login(role) { 
             if(role === 'guru') {
@@ -437,21 +459,21 @@
                switchView('form');
                document.getElementById('guru-nav').classList.remove('hidden');
                syncMaster();
+               const lg = localStorage.getItem('sirekap_last_guru');
+               if(lg) fetchMyHistory();
             } else {
-               document.getElementById('btn-guru').style.display = 'none';
-               document.getElementById('btn-admin').style.display = 'none';
+               document.getElementById('btn-guru').classList.add('hidden');
+               document.getElementById('btn-admin').classList.add('hidden');
                document.getElementById('pass-area').classList.remove('hidden');
             }
         }
 
         function cancelAdmin() {
-            document.getElementById('btn-guru').style.display = 'inline-flex';
-            document.getElementById('btn-admin').style.display = 'inline-flex';
+            document.getElementById('btn-guru').classList.remove('hidden');
+            document.getElementById('btn-admin').classList.remove('hidden');
             document.getElementById('pass-area').classList.add('hidden');
             document.getElementById('adminPass_secure').value = '';
         }
-
-        function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
         
         function checkAdmin() { 
             if(document.getElementById('adminPass_secure').value===getAdminPass()) { 
@@ -467,10 +489,235 @@
         function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
         function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses!");closeChangePass();} else alert("Gagal"); }
 
-        function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
-        function saveApi() { localStorage.setItem('sirekap_api', document.getElementById('apiUrl').value); localStorage.setItem('sirekap_sheet', document.getElementById('sheetUrl').value); location.reload(); }
-        function showSetup() { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); }
-        
+        function logout() {
+            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
+            document.getElementById('admin-nav').classList.add('hidden');
+            document.getElementById('guru-nav').classList.add('hidden');
+            document.getElementById('btn-guru').classList.remove('hidden');
+            document.getElementById('btn-admin').classList.remove('hidden');
+            document.getElementById('pass-area').classList.add('hidden');
+            document.getElementById('adminPass_secure').value = '';
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('splash-screen').style.display = 'flex';
+        }
+
+        // --- TABS & UJIAN LOGIC ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            if(tab === 'harian') {
+                document.getElementById('form-harian').classList.remove('hidden');
+                document.getElementById('form-ujian').classList.add('hidden');
+            } else {
+                document.getElementById('form-harian').classList.add('hidden');
+                document.getElementById('form-ujian').classList.remove('hidden');
+                const g = document.getElementById('guru').value;
+                if(g) setTimeout(() => { if(document.getElementById('guru_ujian')) document.getElementById('guru_ujian').value = g; }, 100);
+            }
+        }
+
+        function renderUjian() {
+            const cat = document.getElementById('cat_ujian').value;
+            const container = document.getElementById('ujian-inputs');
+            container.innerHTML = '';
+            const inMapel = `<div class="form-group"><label>Mapel</label><input type="text" id="mapel_ujian" oninput="filterList('list-mapel-ujian', 'mapel_ujian')" onfocus="filterList('list-mapel-ujian', 'mapel_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-mapel-ujian"></ul></div>`;
+            const inKelas = `<div class="form-group"><label>Kelas</label><input type="text" id="kelas_ujian" oninput="filterList('list-kelas-ujian', 'kelas_ujian')" onfocus="filterList('list-kelas-ujian', 'kelas_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-kelas-ujian"></ul></div>`;
+            let html = '';
+            if(cat === 'mengawas') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah (Mapel/Sesi)</label><input type="number" id="vol_u" value="1"></div>`; }
+            else if (cat === 'tulis_soal') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Paket Soal</label><input type="number" id="vol_u" value="1"></div>`; }
+            else if (cat === 'periksa' || cat === 'praktik') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Siswa</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
+            else if (cat === 'rapor') { html += inKelas + `<div class="form-group"><label>Jumlah Rapor (Siswa)</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
+            container.innerHTML = html;
+        }
+
+        // --- HISTORY & EDIT FUNCTIONS ---
+        function fetchMyHistory() {
+            if(!API_URL) return;
+            const guruName = document.getElementById('guru').value || document.getElementById('guru_ujian').value;
+            if(!guruName) return;
+
+            Promise.all([
+                fetch(API_URL+"?action=read&type=harian").then(r=>r.json()),
+                fetch(API_URL+"?action=read&type=ujian").then(r=>r.json())
+            ]).then(([harian, ujian]) => {
+                myHistoryData = [];
+                if(harian.result === 'success') {
+                    harian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'harian'}); });
+                }
+                if(ujian.result === 'success') {
+                    ujian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'ujian'}); });
+                }
+                renderHistory();
+            });
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            myHistoryData.sort((a,b) => b.ID - a.ID);
+            
+            if(myHistoryData.length === 0) {
+                list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic;">Tidak ada riwayat input.</p>';
+                return;
+            }
+
+            myHistoryData.slice(0, 10).forEach(item => {
+                const isHarian = item.type === 'harian';
+                const desc = isHarian ? `${item.Mapel} (${item.Kelas})` : `${item.Kategori} - ${item.Rincian}`;
+                const val = isHarian ? `${item['Jam Sendiri'] || item['Jam Team']} JP` : `Vol: ${item.Volume}`;
+                const badge = isHarian ? 'KBM' : 'UJIAN';
+                const badgeColor = isHarian ? '#e0f2fe' : '#dcfce7';
+                const textColor = isHarian ? '#0284c7' : '#15803d';
+
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div>
+                        <span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; color:${textColor}; padding:2px 6px; border-radius:4px;">${badge}</span>
+                        <span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${item.Tanggal}</span>
+                        <div style="font-weight:600; margin-top:2px; font-size:0.9rem;">${desc}</div>
+                        <div style="font-size:0.8rem; color:#64748b;">${val}</div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="btn-icon btn-edit-item click-sound" onclick='editEntry(${JSON.stringify(item)})'>✏️</button>
+                        <button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}', '${item.type}')">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function editEntry(item) {
+            switchTab(item.type);
+            
+            if(item.type === 'harian') {
+                document.getElementById('edit_id_harian').value = item.ID;
+                document.getElementById('date').value = item.Tanggal; 
+                document.getElementById('guru').value = item.Guru;
+                document.getElementById('mapel').value = item.Mapel;
+                document.getElementById('kelas').value = item.Kelas;
+                const modeVal = item.Mode ? item.Mode.toLowerCase() : '';
+                if(modeVal.includes('sendiri')) document.getElementById('t-sendiri').checked = true;
+                else document.getElementById('t-berdua').checked = true;
+                const jam = parseInt(item['Jam Sendiri']) || parseInt(item['Jam Team']) || 1;
+                document.getElementById('hours').value = jam;
+                document.getElementById('isSubstitute').checked = (item.Status === 'Badal');
+
+                document.getElementById('btn-submit-harian').textContent = "Update Data KBM";
+                document.getElementById('btn-submit-harian').classList.replace('btn-primary', 'btn-warning');
+                document.getElementById('btn-cancel-harian').classList.remove('hidden');
+                document.getElementById('form-harian').scrollIntoView({behavior:'smooth'});
+
+            } else {
+                document.getElementById('edit_id_ujian').value = item.ID;
+                document.getElementById('guru_ujian').value = item.Guru;
+                const catSelect = document.getElementById('cat_ujian');
+                const catVal = item.Kategori ? item.Kategori.toLowerCase() : '';
+                for(let i=0; i<catSelect.options.length; i++){ if(catSelect.options[i].value === catVal) catSelect.selectedIndex = i; }
+                renderUjian();
+                
+                const parts = item.Rincian ? item.Rincian.split(', ') : [];
+                if(document.getElementById('mapel_ujian') && parts[0]) document.getElementById('mapel_ujian').value = parts[0];
+                if(document.getElementById('kelas_ujian') && parts[1]) document.getElementById('kelas_ujian').value = parts[1];
+                if(document.getElementById('vol_u')) document.getElementById('vol_u').value = item.Volume;
+
+                document.getElementById('btn-submit-ujian').textContent = "Update Data Ujian";
+                document.getElementById('btn-submit-ujian').classList.replace('btn-success', 'btn-warning');
+                document.getElementById('btn-cancel-ujian').classList.remove('hidden');
+                document.getElementById('form-ujian').scrollIntoView({behavior:'smooth'});
+            }
+        }
+
+        function deleteEntry(id, type) {
+            if(confirm("Yakin ingin menghapus data ini?")) {
+                const fd = new FormData();
+                fd.append('action', 'delete');
+                fd.append('ID', id);
+                fd.append('type', type);
+                
+                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                    if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal Hapus");
+                });
+            }
+        }
+
+        function cancelEdit(type) {
+            if(type === 'harian') {
+                document.getElementById('edit_id_harian').value = '';
+                document.getElementById('btn-submit-harian').textContent = "Kirim Laporan KBM";
+                document.getElementById('btn-submit-harian').classList.replace('btn-warning', 'btn-primary');
+                document.getElementById('btn-cancel-harian').classList.add('hidden');
+                document.getElementById('mapel').value=''; 
+                document.getElementById('kelas').value='';
+            } else {
+                document.getElementById('edit_id_ujian').value = '';
+                document.getElementById('btn-submit-ujian').textContent = "Kirim Laporan Ujian";
+                document.getElementById('btn-submit-ujian').classList.replace('btn-warning', 'btn-success');
+                document.getElementById('btn-cancel-ujian').classList.add('hidden');
+                document.getElementById('ujian-inputs').innerHTML = '';
+            }
+        }
+
+        // --- SUBMISSIONS ---
+        function submitUjian(e) {
+            e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
+            const editId = document.getElementById('edit_id_ujian').value;
+            const action = editId ? 'update' : 'insert';
+            const cat=document.getElementById('cat_ujian').value, guru=document.getElementById('guru_ujian').value, vol=document.getElementById('vol_u').value;
+            let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
+            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
+            if(document.getElementById('mapel_ujian') && !MASTER.mapel.includes(document.getElementById('mapel_ujian').value)) return alert("Mapel tidak terdaftar!");
+            if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas tidak terdaftar!");
+            
+            localStorage.setItem('sirekap_last_guru', guru);
+            const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Guru:guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
+            sendData(payload, btn, 'ujian');
+        }
+
+        function submitHarian(e) {
+            e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
+            const editId = document.getElementById('edit_id_harian').value;
+            const action = editId ? 'update' : 'insert';
+            const guru=document.getElementById('guru').value, mapel=document.getElementById('mapel').value, kelas=document.getElementById('kelas').value;
+            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
+            if(!MASTER.mapel.includes(mapel)) return alert("Mapel tidak terdaftar!");
+            if(!MASTER.kelas.includes(kelas)) return alert("Kelas tidak terdaftar!");
+            
+            localStorage.setItem('sirekap_last_guru', guru);
+            const payload = { action: action, type: 'harian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, Guru:guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0 };
+            sendData(payload, btn, 'harian');
+        }
+
+        function sendData(p, btn, type) {
+            btn.disabled=true; btn.textContent="Mengirim...";
+            const fd=new FormData(); for(let k in p) fd.append(k, p[k]);
+            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+                if(d.result==='success') {
+                    showNotif("Data Tersimpan! ✅");
+                    if(p.action === 'update') cancelEdit(type);
+                    else {
+                        if(type==='harian'){ document.getElementById('mapel').value=''; document.getElementById('kelas').value=''; document.getElementById('isSubstitute').checked=false; }
+                        else { document.getElementById('guru_ujian').value=''; if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
+                    }
+                    fetchMyHistory();
+                } else alert("Gagal: " + d.message);
+            }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
+        }
+
+        // --- FILTER & UTILS ---
+        function filterList(listId, inputId) {
+            const list = document.getElementById(listId);
+            const input = document.getElementById(inputId);
+            const val = input.value.toLowerCase();
+            let data = [];
+            if(listId.includes('guru')) data = MASTER.guru; else if(listId.includes('mapel')) data = MASTER.mapel; else if(listId.includes('kelas')) data = MASTER.kelas;
+            list.innerHTML = '';
+            const filtered = data.filter(item => item.toLowerCase().includes(val));
+            if(filtered.length === 0) list.innerHTML = '<li style="padding:10px; color:red;">Tidak ditemukan. Hubungi Admin.</li>';
+            else filtered.sort().forEach(item => { const li = document.createElement('li'); li.className = 'autocomplete-item'; li.textContent = item; li.onmousedown = () => { input.value = item; list.style.display='none'; playClick(); if(listId.includes('guru')) fetchMyHistory(); }; list.appendChild(li); });
+            list.style.display = 'block';
+        }
+
         function syncMaster(v) {
             if(!API_URL) return;
             const btnUpdate = document.getElementById('btn-update-guru');
@@ -505,69 +752,24 @@
             fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success'){localStorage.setItem('sirekap_master',JSON.stringify(MASTER)); if(!silent) showNotif("Data Master Tersimpan!"); } else if(!silent) alert("Gagal Simpan"); });
         }
         
-        function filterList(listId, inputId) {
-            const list = document.getElementById(listId);
-            const input = document.getElementById(inputId);
-            const val = input.value.toLowerCase();
-            let data = [];
-            if(listId.includes('guru')) data = MASTER.guru; else if(listId.includes('mapel')) data = MASTER.mapel; else if(listId.includes('kelas')) data = MASTER.kelas;
-            list.innerHTML = '';
-            const filtered = data.filter(item => item.toLowerCase().includes(val));
-            if(filtered.length === 0) list.innerHTML = '<li style="padding:10px; color:red;">Tidak ditemukan. Hubungi Admin.</li>';
-            else filtered.sort().forEach(item => { const li = document.createElement('li'); li.className = 'autocomplete-item'; li.textContent = item; li.onmousedown = () => { input.value = item; list.style.display='none'; playClick(); }; list.appendChild(li); });
-            list.style.display = 'block';
-        }
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active');
-            if(tab === 'harian') { document.getElementById('form-harian').classList.remove('hidden'); document.getElementById('form-ujian').classList.add('hidden'); }
-            else { document.getElementById('form-harian').classList.add('hidden'); document.getElementById('form-ujian').classList.remove('hidden'); const g=document.getElementById('guru').value; if(g) setTimeout(()=>{if(document.getElementById('guru_ujian'))document.getElementById('guru_ujian').value=g},100); }
-        }
-        function renderUjian() {
-            const cat = document.getElementById('cat_ujian').value;
-            const container = document.getElementById('ujian-inputs');
-            container.innerHTML = '';
-            const inMapel = `<div class="form-group"><label>Mapel</label><input type="text" id="mapel_ujian" oninput="filterList('list-mapel-ujian', 'mapel_ujian')" onfocus="filterList('list-mapel-ujian', 'mapel_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-mapel-ujian"></ul></div>`;
-            const inKelas = `<div class="form-group"><label>Kelas</label><input type="text" id="kelas_ujian" oninput="filterList('list-kelas-ujian', 'kelas_ujian')" onfocus="filterList('list-kelas-ujian', 'kelas_ujian')" placeholder="Ketik..." autocomplete="off"><ul class="autocomplete-list" id="list-kelas-ujian"></ul></div>`;
-            let html = '';
-            if(cat === 'mengawas') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah (Mapel/Sesi)</label><input type="number" id="vol_u" value="1"></div>`; }
-            else if (cat === 'tulis_soal') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Paket Soal</label><input type="number" id="vol_u" value="1"></div>`; }
-            else if (cat === 'periksa' || cat === 'praktik') { html += inMapel + inKelas + `<div class="form-group"><label>Jumlah Siswa</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
-            else if (cat === 'rapor') { html += inKelas + `<div class="form-group"><label>Jumlah Rapor (Siswa)</label><input type="number" id="vol_u" placeholder="Jml Siswa..."></div>`; }
-            container.innerHTML = html;
-        }
-        function submitUjian(e) {
-            e.preventDefault(); const btn=e.target.querySelector('button');
-            const cat=document.getElementById('cat_ujian').value, guru=document.getElementById('guru_ujian').value, vol=document.getElementById('vol_u').value;
-            let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
-            if(document.getElementById('mapel_ujian') && !MASTER.mapel.includes(document.getElementById('mapel_ujian').value)) return alert("Mapel tidak terdaftar!");
-            if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas tidak terdaftar!");
-            localStorage.setItem('sirekap_last_guru', guru);
-            sendData({action:'insert_ujian', ID:Date.now(), Tanggal:document.getElementById('date').value, Guru:guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0}, btn, 'ujian');
-        }
-        function submitHarian(e) {
-            e.preventDefault(); const btn=e.target.querySelector('button');
-            const guru=document.getElementById('guru').value, mapel=document.getElementById('mapel').value, kelas=document.getElementById('kelas').value;
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
-            if(!MASTER.mapel.includes(mapel)) return alert("Mapel tidak terdaftar!");
-            if(!MASTER.kelas.includes(kelas)) return alert("Kelas tidak terdaftar!");
-            localStorage.setItem('sirekap_last_guru', guru);
-            sendData({action:'insert', ID:Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, Guru:guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0}, btn, 'harian');
-        }
-        function sendData(p, btn, type) {
-            btn.disabled=true; btn.textContent="Mengirim...";
-            const fd=new FormData(); for(let k in p) fd.append(k, p[k]);
-            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
-                if(d.result==='success') {
-                    showNotif("Data Tersimpan! ✅");
-                    if(type==='harian'){ document.getElementById('mapel').value=''; document.getElementById('kelas').value=''; document.getElementById('isSubstitute').checked=false; document.getElementById('hours').value='1'; }
-                    else { document.getElementById('guru_ujian').value=''; if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
-                } else alert("Gagal");
-            }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
-        }
         function fetchData() {
-            fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-kbm tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0)d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'; });
-            fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-ujian tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0)d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center;">Kosong</td></tr>'; });
+            fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{ 
+                const tb=document.querySelector('#dash-table-kbm tbody'); 
+                tb.innerHTML=''; 
+                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); 
+                else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; 
+            }).catch(() => {
+                document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>';
+            });
+            
+            fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{ 
+                const tb=document.querySelector('#dash-table-ujian tbody'); 
+                tb.innerHTML=''; 
+                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); 
+                else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; 
+            }).catch(() => {
+                document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>';
+            });
         }
         function filterMasterDisplay() {
             const query = document.getElementById('search-master').value.toLowerCase();
@@ -577,6 +779,10 @@
         function showNotif(msg) { const n = document.getElementById('notif'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none', 2000); }
         const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
         function playClick(){ if(audioCtx.state==='suspended')audioCtx.resume(); const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.00001,audioCtx.currentTime+0.1);o.stop(audioCtx.currentTime+0.1); }
+        
+        function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
+        function saveApi() { localStorage.setItem('sirekap_api', document.getElementById('apiUrl').value); localStorage.setItem('sirekap_sheet', document.getElementById('sheetUrl').value); location.reload(); }
+        function showSetup() { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); }
     </script>
 </body>
 </html>
