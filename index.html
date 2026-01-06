@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v10.5.1 - Final Perfect</title>
+    <title>SIREKAP v11.0 - Final Scroll</title>
     <style>
         :root {
             /* Palette Warna Premium */
@@ -19,7 +19,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background-color: var(--bg); color: var(--text-main); padding-bottom: 90px;
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            padding-bottom: 90px;
             background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
@@ -118,9 +120,30 @@
         .search-bar { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; margin-bottom: 10px; background: #f8fafc; outline: none; transition: 0.2s; }
         .search-bar:focus { border-color: var(--primary); background: white; }
 
-        /* --- HISTORY ITEM --- */
-        .history-item { background: #f0f9ff; border: 1px solid #bae6fd; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .history-info { font-size: 0.85rem; color: #0369a1; }
+        /* --- EXCEL BUTTONS (RESTORED STYLE 3D) --- */
+        .excel-btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-excel-sheet {
+            flex: 1; text-decoration: none; padding: 14px 10px; border-radius: 12px;
+            font-weight: 700; font-size: 0.9rem; text-align: center; color: white !important;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: transform 0.1s; position: relative; top: 0;
+        }
+        .btn-excel-sheet:active { top: 4px; box-shadow: none !important; }
+        .btn-excel-kbm { background: #3b82f6; box-shadow: 0 4px 0 #1d4ed8; } /* Biru */
+        .btn-excel-ujian { background: #10b981; box-shadow: 0 4px 0 #047857; } /* Hijau */
+
+        /* --- HISTORY SCROLL AREA (NEW) --- */
+        #my-history { margin-top: 30px; }
+        .history-scroll-box {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 15px;
+            background: #f8fafc;
+            margin-top: 10px;
+        }
+        .history-item { background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
         .history-actions { display: flex; gap: 8px; }
         .btn-icon { width: 32px; height: 32px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: transform 0.1s; }
         .btn-icon:active { transform: scale(0.9); }
@@ -141,7 +164,7 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 10.5.1 Final Perfect</p>
+        <p class="splash-version">Versi 11.0 Final</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
@@ -242,9 +265,7 @@
 
                 <!-- FORM HARIAN -->
                 <form id="form-harian" onsubmit="submitHarian(event)">
-                    <!-- Hidden field for Editing ID -->
                     <input type="hidden" id="edit_id_harian">
-                    
                     <div class="form-row">
                         <div class="form-group"><label>Tanggal</label><input type="date" id="date" required></div>
                         <div class="form-group"><label>Waktu</label><input type="time" id="time" required></div>
@@ -277,7 +298,7 @@
                                 <option value="2">2 Jam</option>
                                 <option value="3">3 Jam</option>
                                 <option value="4">4 Jam</option>
-                                <option value="5">5 Jam</option> <!-- Ditambahkan opsi 5 Jam -->
+                                <option value="5">5 Jam</option>
                             </select>
                         </div>
                     </div>
@@ -309,9 +330,7 @@
 
                 <!-- FORM UJIAN -->
                 <form id="form-ujian" class="hidden" onsubmit="submitUjian(event)">
-                    <!-- Hidden field for Editing ID -->
                     <input type="hidden" id="edit_id_ujian">
-
                     <div class="form-group">
                         <label>Nama Guru</label>
                         <input type="text" id="guru_ujian" placeholder="Ketik nama Anda..." oninput="filterList('list-guru-ujian', 'guru_ujian'); fetchMyHistory();" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
@@ -338,11 +357,13 @@
                     </div>
                 </form>
 
-                <!-- RIWAYAT SAYA -->
-                <div id="my-history" style="margin-top:30px; border-top:2px dashed #e2e8f0; padding-top:20px;">
+                <!-- RIWAYAT SAYA (SCROLLABLE & PERSISTENT) -->
+                <div id="my-history">
                     <h4 style="margin:0 0 10px 0; color:#64748b;">Riwayat Input Terakhir Saya</h4>
-                    <div id="history-list">
-                        <p style="font-size:0.8rem; color:#94a3b8; font-style:italic;">Belum ada data / Pilih nama guru dulu.</p>
+                    <div class="history-scroll-box">
+                        <div id="history-list">
+                            <p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Pilih nama guru untuk melihat riwayat.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -358,10 +379,13 @@
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <button onclick="fetchData()" class="btn-3d btn-primary click-sound">🔄 Refresh Data</button>
                 </div>
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <a id="btn-open-kbm" href="#" target="_blank" class="btn-3d btn-info click-sound" style="text-decoration:none;">📂 Data KBM</a>
-                    <a id="btn-open-ujian" href="#" target="_blank" class="btn-3d btn-success click-sound" style="text-decoration:none;">📂 Data Ujian</a>
+                
+                <!-- TOMBOL EXCEL 3D TEBAL -->
+                <div class="excel-btn-group">
+                    <a id="btn-open-kbm" href="#" target="_blank" class="btn-excel-sheet btn-excel-kbm click-sound">📂 Data KBM</a>
+                    <a id="btn-open-ujian" href="#" target="_blank" class="btn-excel-sheet btn-excel-ujian click-sound">📂 Data Ujian</a>
                 </div>
+                
                 <div class="dash-section">
                     <div class="dash-header"><h3>Absensi KBM Harian</h3></div>
                     <div class="table-scroll-container">
@@ -450,9 +474,8 @@
             }
         }
 
-        // --- LOGIN & PASSWORD LOGIC ---
+        // --- LOGIN ---
         function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
-
         function login(role) { 
             if(role === 'guru') {
                document.getElementById('overlay').classList.add('hidden');
@@ -467,14 +490,12 @@
                document.getElementById('pass-area').classList.remove('hidden');
             }
         }
-
         function cancelAdmin() {
             document.getElementById('btn-guru').classList.remove('hidden');
             document.getElementById('btn-admin').classList.remove('hidden');
             document.getElementById('pass-area').classList.add('hidden');
             document.getElementById('adminPass_secure').value = '';
         }
-        
         function checkAdmin() { 
             if(document.getElementById('adminPass_secure').value===getAdminPass()) { 
                 document.getElementById('overlay').classList.add('hidden'); 
@@ -484,11 +505,9 @@
                 renderMaster('guru'); 
             } else alert("Password Salah"); 
         }
-
         function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
         function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
         function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses!");closeChangePass();} else alert("Gagal"); }
-
         function logout() {
             ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
             document.getElementById('admin-nav').classList.add('hidden');
@@ -501,7 +520,7 @@
             document.getElementById('splash-screen').style.display = 'flex';
         }
 
-        // --- TABS & UJIAN LOGIC ---
+        // --- FORM & TABS ---
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -530,7 +549,7 @@
             container.innerHTML = html;
         }
 
-        // --- HISTORY & EDIT FUNCTIONS ---
+        // --- FETCH & HISTORY ---
         function fetchMyHistory() {
             if(!API_URL) return;
             const guruName = document.getElementById('guru').value || document.getElementById('guru_ujian').value;
@@ -541,12 +560,8 @@
                 fetch(API_URL+"?action=read&type=ujian").then(r=>r.json())
             ]).then(([harian, ujian]) => {
                 myHistoryData = [];
-                if(harian.result === 'success') {
-                    harian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'harian'}); });
-                }
-                if(ujian.result === 'success') {
-                    ujian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'ujian'}); });
-                }
+                if(harian.result === 'success') harian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'harian'}); });
+                if(ujian.result === 'success') ujian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'ujian'}); });
                 renderHistory();
             });
         }
@@ -557,11 +572,11 @@
             myHistoryData.sort((a,b) => b.ID - a.ID);
             
             if(myHistoryData.length === 0) {
-                list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic;">Tidak ada riwayat input.</p>';
+                list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Tidak ada riwayat input.</p>';
                 return;
             }
 
-            myHistoryData.slice(0, 10).forEach(item => {
+            myHistoryData.forEach(item => {
                 const isHarian = item.type === 'harian';
                 const desc = isHarian ? `${item.Mapel} (${item.Kelas})` : `${item.Kategori} - ${item.Rincian}`;
                 const val = isHarian ? `${item['Jam Sendiri'] || item['Jam Team']} JP` : `Vol: ${item.Volume}`;
@@ -589,7 +604,6 @@
 
         function editEntry(item) {
             switchTab(item.type);
-            
             if(item.type === 'harian') {
                 document.getElementById('edit_id_harian').value = item.ID;
                 document.getElementById('date').value = item.Tanggal; 
@@ -607,7 +621,6 @@
                 document.getElementById('btn-submit-harian').classList.replace('btn-primary', 'btn-warning');
                 document.getElementById('btn-cancel-harian').classList.remove('hidden');
                 document.getElementById('form-harian').scrollIntoView({behavior:'smooth'});
-
             } else {
                 document.getElementById('edit_id_ujian').value = item.ID;
                 document.getElementById('guru_ujian').value = item.Guru;
@@ -615,7 +628,6 @@
                 const catVal = item.Kategori ? item.Kategori.toLowerCase() : '';
                 for(let i=0; i<catSelect.options.length; i++){ if(catSelect.options[i].value === catVal) catSelect.selectedIndex = i; }
                 renderUjian();
-                
                 const parts = item.Rincian ? item.Rincian.split(', ') : [];
                 if(document.getElementById('mapel_ujian') && parts[0]) document.getElementById('mapel_ujian').value = parts[0];
                 if(document.getElementById('kelas_ujian') && parts[1]) document.getElementById('kelas_ujian').value = parts[1];
@@ -634,10 +646,7 @@
                 fd.append('action', 'delete');
                 fd.append('ID', id);
                 fd.append('type', type);
-                
-                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
-                    if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal Hapus");
-                });
+                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal Hapus"); });
             }
         }
 
@@ -647,8 +656,7 @@
                 document.getElementById('btn-submit-harian').textContent = "Kirim Laporan KBM";
                 document.getElementById('btn-submit-harian').classList.replace('btn-warning', 'btn-primary');
                 document.getElementById('btn-cancel-harian').classList.add('hidden');
-                document.getElementById('mapel').value=''; 
-                document.getElementById('kelas').value='';
+                document.getElementById('mapel').value=''; document.getElementById('kelas').value='';
             } else {
                 document.getElementById('edit_id_ujian').value = '';
                 document.getElementById('btn-submit-ujian').textContent = "Kirim Laporan Ujian";
@@ -658,19 +666,25 @@
             }
         }
 
-        // --- SUBMISSIONS ---
+        // --- SUBMIT ---
         function submitUjian(e) {
             e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
             const editId = document.getElementById('edit_id_ujian').value;
             const action = editId ? 'update' : 'insert';
             const cat=document.getElementById('cat_ujian').value, guru=document.getElementById('guru_ujian').value, vol=document.getElementById('vol_u').value;
             let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
+            
             if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
             if(document.getElementById('mapel_ujian') && !MASTER.mapel.includes(document.getElementById('mapel_ujian').value)) return alert("Mapel tidak terdaftar!");
             if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas tidak terdaftar!");
             
             localStorage.setItem('sirekap_last_guru', guru);
             const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Guru:guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
+            
+            // Check Duplicate for Insert
+            if (action === 'insert' && checkDuplicate(payload, 'ujian')) {
+                if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return;
+            }
             sendData(payload, btn, 'ujian');
         }
 
@@ -685,7 +699,20 @@
             
             localStorage.setItem('sirekap_last_guru', guru);
             const payload = { action: action, type: 'harian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, Guru:guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0 };
+            
+            if (action === 'insert' && checkDuplicate(payload, 'harian')) {
+                 if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return;
+            }
             sendData(payload, btn, 'harian');
+        }
+
+        function checkDuplicate(data, type) {
+            if (myHistoryData.length === 0) return false;
+            return myHistoryData.some(item => {
+                if (item.type !== type) return false;
+                if (type === 'harian') return item.Tanggal === data.Tanggal && item.Guru === data.Guru && item.Mapel === data.Mapel && item.Kelas === data.Kelas;
+                else return item.Tanggal === data.Tanggal && item.Guru === data.Guru && item.Kategori === data.Kategori && item.Rincian === data.Rincian;
+            });
         }
 
         function sendData(p, btn, type) {
@@ -704,7 +731,6 @@
             }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
         }
 
-        // --- FILTER & UTILS ---
         function filterList(listId, inputId) {
             const list = document.getElementById(listId);
             const input = document.getElementById(inputId);
