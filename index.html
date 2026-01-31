@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v11.0 - Final Scroll</title>
+    <title>SIREKAP v12.0 - Split Column</title>
     <style>
         :root {
             /* Palette Warna Premium */
@@ -19,9 +19,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body { 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            padding-bottom: 90px;
+            background-color: var(--bg); color: var(--text-main); padding-bottom: 90px;
             background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
             background-size: 24px 24px;
         }
@@ -120,7 +118,7 @@
         .search-bar { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; margin-bottom: 10px; background: #f8fafc; outline: none; transition: 0.2s; }
         .search-bar:focus { border-color: var(--primary); background: white; }
 
-        /* --- EXCEL BUTTONS (RESTORED STYLE 3D) --- */
+        /* --- EXCEL BUTTONS --- */
         .excel-btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-excel-sheet {
             flex: 1; text-decoration: none; padding: 14px 10px; border-radius: 12px;
@@ -129,19 +127,13 @@
             transition: transform 0.1s; position: relative; top: 0;
         }
         .btn-excel-sheet:active { top: 4px; box-shadow: none !important; }
-        .btn-excel-kbm { background: #3b82f6; box-shadow: 0 4px 0 #1d4ed8; } /* Biru */
-        .btn-excel-ujian { background: #10b981; box-shadow: 0 4px 0 #047857; } /* Hijau */
+        .btn-excel-kbm { background: #3b82f6; box-shadow: 0 4px 0 #1d4ed8; }
+        .btn-excel-ujian { background: #10b981; box-shadow: 0 4px 0 #047857; }
 
-        /* --- HISTORY SCROLL AREA (NEW) --- */
+        /* --- HISTORY SCROLL AREA --- */
         #my-history { margin-top: 30px; }
         .history-scroll-box {
-            max-height: 250px;
-            overflow-y: auto;
-            border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 15px;
-            background: #f8fafc;
-            margin-top: 10px;
+            max-height: 250px; overflow-y: auto; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; background: #f8fafc; margin-top: 10px;
         }
         .history-item { background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
         .history-actions { display: flex; gap: 8px; }
@@ -164,7 +156,7 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 11.0 Final</p>
+        <p class="splash-version">Versi 12.0 - Split Column</p>
         
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
@@ -228,6 +220,25 @@
         </div>
     </div>
 
+    <!-- OVERLAY EDIT MASTER -->
+    <div id="edit-overlay" class="hidden">
+        <div class="box" style="width: 90%; max-width: 350px;">
+            <h3 style="margin-top:0; color:var(--text-main);">Edit Data</h3>
+            <div id="edit-code-group" style="text-align:left; margin-bottom:15px;">
+                <label>Kode (Angka 01-99)</label>
+                <input type="number" id="edit-code" placeholder="Contoh: 05">
+            </div>
+            <div style="text-align:left; margin-bottom:20px;">
+                <label id="lbl-edit-name">Nama Guru</label>
+                <input type="text" id="edit-name" placeholder="Nama Lengkap...">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-3d btn-success click-sound" onclick="saveEditMaster()">Simpan Perubahan</button>
+                <button class="btn-3d btn-danger click-sound" onclick="closeEditModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <!-- NOTIFIKASI -->
     <div id="notif" style="position:fixed; top:20px; right:20px; background:#10b981; color:white; padding:15px 25px; border-radius:50px; display:none; z-index:10000; font-weight:700; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);">Data Tersimpan! ✅</div>
 
@@ -265,15 +276,17 @@
 
                 <!-- FORM HARIAN -->
                 <form id="form-harian" onsubmit="submitHarian(event)">
+                    <!-- Hidden field for Editing ID -->
                     <input type="hidden" id="edit_id_harian">
+                    
                     <div class="form-row">
                         <div class="form-group"><label>Tanggal</label><input type="date" id="date" required></div>
                         <div class="form-group"><label>Waktu</label><input type="time" id="time" required></div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Nama Guru</label>
-                        <input type="text" id="guru" placeholder="Ketik nama Anda..." required oninput="filterList('list-guru', 'guru'); fetchMyHistory();" onfocus="filterList('list-guru', 'guru')" autocomplete="off">
+                        <label>Nama Guru (Ketik Kode 01..)</label>
+                        <input type="text" id="guru" placeholder="Ketik Kode / Nama..." required oninput="filterList('list-guru', 'guru'); fetchMyHistory();" onfocus="filterList('list-guru', 'guru')" autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru"></ul>
                     </div>
 
@@ -333,7 +346,7 @@
                     <input type="hidden" id="edit_id_ujian">
                     <div class="form-group">
                         <label>Nama Guru</label>
-                        <input type="text" id="guru_ujian" placeholder="Ketik nama Anda..." oninput="filterList('list-guru-ujian', 'guru_ujian'); fetchMyHistory();" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
+                        <input type="text" id="guru_ujian" placeholder="Ketik Kode/Nama..." oninput="filterList('list-guru-ujian', 'guru_ujian'); fetchMyHistory();" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru-ujian"></ul>
                     </div>
 
@@ -357,7 +370,7 @@
                     </div>
                 </form>
 
-                <!-- RIWAYAT SAYA (SCROLLABLE & PERSISTENT) -->
+                <!-- RIWAYAT SAYA -->
                 <div id="my-history">
                     <h4 style="margin:0 0 10px 0; color:#64748b;">Riwayat Input Terakhir Saya</h4>
                     <div class="history-scroll-box">
@@ -379,13 +392,10 @@
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <button onclick="fetchData()" class="btn-3d btn-primary click-sound">🔄 Refresh Data</button>
                 </div>
-                
-                <!-- TOMBOL EXCEL 3D TEBAL -->
                 <div class="excel-btn-group">
                     <a id="btn-open-kbm" href="#" target="_blank" class="btn-excel-sheet btn-excel-kbm click-sound">📂 Data KBM</a>
                     <a id="btn-open-ujian" href="#" target="_blank" class="btn-excel-sheet btn-excel-ujian click-sound">📂 Data Ujian</a>
                 </div>
-                
                 <div class="dash-section">
                     <div class="dash-header"><h3>Absensi KBM Harian</h3></div>
                     <div class="table-scroll-container">
@@ -415,11 +425,22 @@
                     <button class="btn-3d btn-warning click-sound" onclick="renderMaster('kelas')">Kelas</button>
                 </div>
                 <h4 id="master-title" style="color:var(--text-main); margin-bottom:10px; font-size:1.1rem; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">Daftar Guru</h4>
+                
                 <input type="text" id="search-master" class="search-bar" placeholder="🔍 Cari data..." oninput="filterMasterDisplay()">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                
+                <!-- INPUT TAMBAH MASTER -->
+                <div id="master-input-container" style="display:flex; gap:10px; margin-bottom:15px;">
                     <input type="text" id="new-master" placeholder="Tambah baru..." style="margin:0; flex:1;">
                     <button class="btn-3d btn-primary click-sound" style="width:auto; padding:0 20px;" onclick="addMaster()">+</button>
                 </div>
+                
+                <!-- SPECIAL INPUT FOR GURU (Hidden by default) -->
+                <div id="master-input-guru" style="display:none; gap:10px; margin-bottom:15px;">
+                     <input type="number" id="new-code" placeholder="Kode" style="margin:0; width:80px;">
+                     <input type="text" id="new-name" placeholder="Nama Guru" style="margin:0; flex:1;">
+                     <button class="btn-3d btn-primary click-sound" style="width:auto; padding:0 20px;" onclick="addMasterGuru()">+</button>
+                </div>
+
                 <div class="master-list-container"><div id="master-list"></div></div>
             </div>
         </div>
@@ -427,11 +448,12 @@
     </div>
 
     <script>
-        let API_URL = localStorage.getItem('sirekap_api') || "https://script.google.com/macros/s/AKfycbx6QpLttVeXSHdovQJRgwccd1xTHrbNqMpP07-xeu-TfAcQQOzVheQsvJEYJ2feUJsi/exec";
-        let SHEET_URL = localStorage.getItem('sirekap_sheet') || "https://docs.google.com/spreadsheets/d/18cRCNqXK860SYVmTDjlyabnL6fgh2sWdTMEG3_Ahpyw/edit?usp=sharing";
+        let API_URL = localStorage.getItem('sirekap_api') || "";
+        let SHEET_URL = localStorage.getItem('sirekap_sheet') || "";
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
         let currentMasterType = 'guru';
+        let currentEditIndex = -1;
         let myHistoryData = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -474,8 +496,9 @@
             }
         }
 
-        // --- LOGIN ---
+        // --- LOGIN & PASSWORD LOGIC ---
         function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
+
         function login(role) { 
             if(role === 'guru') {
                document.getElementById('overlay').classList.add('hidden');
@@ -490,12 +513,14 @@
                document.getElementById('pass-area').classList.remove('hidden');
             }
         }
+
         function cancelAdmin() {
             document.getElementById('btn-guru').classList.remove('hidden');
             document.getElementById('btn-admin').classList.remove('hidden');
             document.getElementById('pass-area').classList.add('hidden');
             document.getElementById('adminPass_secure').value = '';
         }
+        
         function checkAdmin() { 
             if(document.getElementById('adminPass_secure').value===getAdminPass()) { 
                 document.getElementById('overlay').classList.add('hidden'); 
@@ -505,9 +530,11 @@
                 renderMaster('guru'); 
             } else alert("Password Salah"); 
         }
+
         function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
         function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
         function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses!");closeChangePass();} else alert("Gagal"); }
+
         function logout() {
             ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden'));
             document.getElementById('admin-nav').classList.add('hidden');
@@ -520,7 +547,7 @@
             document.getElementById('splash-screen').style.display = 'flex';
         }
 
-        // --- FORM & TABS ---
+        // --- TABS & UJIAN LOGIC ---
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -549,124 +576,12 @@
             container.innerHTML = html;
         }
 
-        // --- FETCH & HISTORY ---
-        function fetchMyHistory() {
-            if(!API_URL) return;
-            const guruName = document.getElementById('guru').value || document.getElementById('guru_ujian').value;
-            if(!guruName) return;
-
-            Promise.all([
-                fetch(API_URL+"?action=read&type=harian").then(r=>r.json()),
-                fetch(API_URL+"?action=read&type=ujian").then(r=>r.json())
-            ]).then(([harian, ujian]) => {
-                myHistoryData = [];
-                if(harian.result === 'success') harian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'harian'}); });
-                if(ujian.result === 'success') ujian.data.forEach(d => { if(d.Guru === guruName) myHistoryData.push({...d, type:'ujian'}); });
-                renderHistory();
-            });
+        // --- SUBMISSIONS & DATA ---
+        function extractCodeName(str) {
+            const match = str.match(/^(\d+)\s+(.*)/);
+            return match ? { code: match[1], name: match[2] } : { code: '', name: str };
         }
 
-        function renderHistory() {
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            myHistoryData.sort((a,b) => b.ID - a.ID);
-            
-            if(myHistoryData.length === 0) {
-                list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Tidak ada riwayat input.</p>';
-                return;
-            }
-
-            myHistoryData.forEach(item => {
-                const isHarian = item.type === 'harian';
-                const desc = isHarian ? `${item.Mapel} (${item.Kelas})` : `${item.Kategori} - ${item.Rincian}`;
-                const val = isHarian ? `${item['Jam Sendiri'] || item['Jam Team']} JP` : `Vol: ${item.Volume}`;
-                const badge = isHarian ? 'KBM' : 'UJIAN';
-                const badgeColor = isHarian ? '#e0f2fe' : '#dcfce7';
-                const textColor = isHarian ? '#0284c7' : '#15803d';
-
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.innerHTML = `
-                    <div>
-                        <span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; color:${textColor}; padding:2px 6px; border-radius:4px;">${badge}</span>
-                        <span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${item.Tanggal}</span>
-                        <div style="font-weight:600; margin-top:2px; font-size:0.9rem;">${desc}</div>
-                        <div style="font-size:0.8rem; color:#64748b;">${val}</div>
-                    </div>
-                    <div class="history-actions">
-                        <button class="btn-icon btn-edit-item click-sound" onclick='editEntry(${JSON.stringify(item)})'>✏️</button>
-                        <button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}', '${item.type}')">🗑️</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function editEntry(item) {
-            switchTab(item.type);
-            if(item.type === 'harian') {
-                document.getElementById('edit_id_harian').value = item.ID;
-                document.getElementById('date').value = item.Tanggal; 
-                document.getElementById('guru').value = item.Guru;
-                document.getElementById('mapel').value = item.Mapel;
-                document.getElementById('kelas').value = item.Kelas;
-                const modeVal = item.Mode ? item.Mode.toLowerCase() : '';
-                if(modeVal.includes('sendiri')) document.getElementById('t-sendiri').checked = true;
-                else document.getElementById('t-berdua').checked = true;
-                const jam = parseInt(item['Jam Sendiri']) || parseInt(item['Jam Team']) || 1;
-                document.getElementById('hours').value = jam;
-                document.getElementById('isSubstitute').checked = (item.Status === 'Badal');
-
-                document.getElementById('btn-submit-harian').textContent = "Update Data KBM";
-                document.getElementById('btn-submit-harian').classList.replace('btn-primary', 'btn-warning');
-                document.getElementById('btn-cancel-harian').classList.remove('hidden');
-                document.getElementById('form-harian').scrollIntoView({behavior:'smooth'});
-            } else {
-                document.getElementById('edit_id_ujian').value = item.ID;
-                document.getElementById('guru_ujian').value = item.Guru;
-                const catSelect = document.getElementById('cat_ujian');
-                const catVal = item.Kategori ? item.Kategori.toLowerCase() : '';
-                for(let i=0; i<catSelect.options.length; i++){ if(catSelect.options[i].value === catVal) catSelect.selectedIndex = i; }
-                renderUjian();
-                const parts = item.Rincian ? item.Rincian.split(', ') : [];
-                if(document.getElementById('mapel_ujian') && parts[0]) document.getElementById('mapel_ujian').value = parts[0];
-                if(document.getElementById('kelas_ujian') && parts[1]) document.getElementById('kelas_ujian').value = parts[1];
-                if(document.getElementById('vol_u')) document.getElementById('vol_u').value = item.Volume;
-
-                document.getElementById('btn-submit-ujian').textContent = "Update Data Ujian";
-                document.getElementById('btn-submit-ujian').classList.replace('btn-success', 'btn-warning');
-                document.getElementById('btn-cancel-ujian').classList.remove('hidden');
-                document.getElementById('form-ujian').scrollIntoView({behavior:'smooth'});
-            }
-        }
-
-        function deleteEntry(id, type) {
-            if(confirm("Yakin ingin menghapus data ini?")) {
-                const fd = new FormData();
-                fd.append('action', 'delete');
-                fd.append('ID', id);
-                fd.append('type', type);
-                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal Hapus"); });
-            }
-        }
-
-        function cancelEdit(type) {
-            if(type === 'harian') {
-                document.getElementById('edit_id_harian').value = '';
-                document.getElementById('btn-submit-harian').textContent = "Kirim Laporan KBM";
-                document.getElementById('btn-submit-harian').classList.replace('btn-warning', 'btn-primary');
-                document.getElementById('btn-cancel-harian').classList.add('hidden');
-                document.getElementById('mapel').value=''; document.getElementById('kelas').value='';
-            } else {
-                document.getElementById('edit_id_ujian').value = '';
-                document.getElementById('btn-submit-ujian').textContent = "Kirim Laporan Ujian";
-                document.getElementById('btn-submit-ujian').classList.replace('btn-warning', 'btn-success');
-                document.getElementById('btn-cancel-ujian').classList.add('hidden');
-                document.getElementById('ujian-inputs').innerHTML = '';
-            }
-        }
-
-        // --- SUBMIT ---
         function submitUjian(e) {
             e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
             const editId = document.getElementById('edit_id_ujian').value;
@@ -679,9 +594,9 @@
             if(document.getElementById('kelas_ujian') && !MASTER.kelas.includes(document.getElementById('kelas_ujian').value)) return alert("Kelas tidak terdaftar!");
             
             localStorage.setItem('sirekap_last_guru', guru);
-            const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Guru:guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
+            const gn = extractCodeName(guru);
+            const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, KodeGuru: gn.code, NamaGuru: gn.name, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
             
-            // Check Duplicate for Insert
             if (action === 'insert' && checkDuplicate(payload, 'ujian')) {
                 if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return;
             }
@@ -698,7 +613,8 @@
             if(!MASTER.kelas.includes(kelas)) return alert("Kelas tidak terdaftar!");
             
             localStorage.setItem('sirekap_last_guru', guru);
-            const payload = { action: action, type: 'harian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, Guru:guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0 };
+            const gn = extractCodeName(guru);
+            const payload = { action: action, type: 'harian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, KodeGuru: gn.code, NamaGuru: gn.name, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0 };
             
             if (action === 'insert' && checkDuplicate(payload, 'harian')) {
                  if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return;
@@ -708,10 +624,15 @@
 
         function checkDuplicate(data, type) {
             if (myHistoryData.length === 0) return false;
+            // Reconstruct full name from parts if needed for comparison
+            const fullName = (data.KodeGuru ? data.KodeGuru + " " : "") + data.NamaGuru;
+            
             return myHistoryData.some(item => {
                 if (item.type !== type) return false;
-                if (type === 'harian') return item.Tanggal === data.Tanggal && item.Guru === data.Guru && item.Mapel === data.Mapel && item.Kelas === data.Kelas;
-                else return item.Tanggal === data.Tanggal && item.Guru === data.Guru && item.Kategori === data.Kategori && item.Rincian === data.Rincian;
+                // Compare logic (simplified)
+                const itemFullName = item.Guru || ((item.Kode ? item.Kode + " " : "") + item.Nama);
+                if (type === 'harian') return item.Tanggal === data.Tanggal && itemFullName === fullName && item.Mapel === data.Mapel && item.Kelas === data.Kelas;
+                else return item.Tanggal === data.Tanggal && itemFullName === fullName && item.Kategori === data.Kategori && item.Rincian === data.Rincian;
             });
         }
 
@@ -731,6 +652,7 @@
             }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
         }
 
+        // --- FILTER & UTILS ---
         function filterList(listId, inputId) {
             const list = document.getElementById(listId);
             const input = document.getElementById(inputId);
@@ -744,6 +666,7 @@
             list.style.display = 'block';
         }
 
+        // --- MASTER DATA FUNCTIONS ---
         function syncMaster(v) {
             if(!API_URL) return;
             const btnUpdate = document.getElementById('btn-update-guru');
@@ -764,14 +687,113 @@
             currentMasterType = type;
             document.getElementById('master-title').textContent = "Daftar " + type.toUpperCase();
             document.getElementById('search-master').value = ''; 
+            
+            if(type === 'guru') {
+                document.getElementById('master-input-container').style.display = 'none';
+                document.getElementById('master-input-guru').style.display = 'flex';
+            } else {
+                document.getElementById('master-input-container').style.display = 'flex';
+                document.getElementById('master-input-guru').style.display = 'none';
+            }
+
+            document.querySelectorAll('#view-master .nav-btn').forEach(b => b.style.background = '#e2e8f0'); event.target.style.background = '#bfdbfe';
             const list = document.getElementById('master-list'); list.innerHTML = '';
-            MASTER[type].sort().forEach((item,idx) => { list.innerHTML += `<div class="master-item"><span>${item}</span> <button class="btn-3d btn-danger" style="width:auto; padding:5px 10px;" onclick="delMaster('${type}',${idx})">✕</button></div>`; });
+            
+            let sortedData = MASTER[type];
+            if (type === 'guru') {
+                sortedData.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+            } else {
+                sortedData.sort();
+            }
+
+            sortedData.forEach((item,idx) => { 
+                list.innerHTML += `
+                <div class="master-item">
+                    <span>${item}</span> 
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-icon btn-edit-item" style="width:28px; height:28px;" onclick="openEditModal('${type}', ${idx})">✎</button>
+                        <button class="btn-icon btn-del-item" style="width:28px; height:28px;" onclick="delMaster('${type}',${idx})">✕</button>
+                    </div>
+                </div>`; 
+            });
         }
+
         function addMaster() {
             const v = document.getElementById('new-master').value.trim();
             if(v) { MASTER[currentMasterType].push(v); renderMaster(currentMasterType); document.getElementById('new-master').value=''; saveMasterToCloud(true); }
         }
+
+        function addMasterGuru() {
+            const code = document.getElementById('new-code').value.trim();
+            const name = document.getElementById('new-name').value.trim();
+            if(code && name) {
+                const formattedCode = code.length === 1 ? "0" + code : code;
+                const fullName = `${formattedCode} ${name}`;
+                MASTER['guru'].push(fullName);
+                renderMaster('guru');
+                document.getElementById('new-code').value='';
+                document.getElementById('new-name').value='';
+                saveMasterToCloud(true);
+            } else {
+                alert("Kode dan Nama harus diisi!");
+            }
+        }
+
         function delMaster(t,i) { if(confirm("Hapus?")) { MASTER[t].splice(i,1); renderMaster(t); saveMasterToCloud(true); } }
+        
+        // --- NEW EDIT MASTER MODAL FUNCTIONS ---
+        function openEditModal(type, idx) {
+            currentMasterType = type;
+            currentEditIndex = idx;
+            const val = MASTER[type][idx];
+
+            document.getElementById('edit-overlay').classList.remove('hidden');
+
+            if (type === 'guru') {
+                document.getElementById('edit-code-group').style.display = 'block';
+                // Try parse "01 Budi"
+                const match = val.match(/^(\d+)\s+(.*)/);
+                if (match) {
+                    document.getElementById('edit-code').value = match[1];
+                    document.getElementById('edit-name').value = match[2];
+                } else {
+                    document.getElementById('edit-code').value = '';
+                    document.getElementById('edit-name').value = val;
+                }
+                document.getElementById('lbl-edit-name').textContent = "Nama Guru";
+            } else {
+                document.getElementById('edit-code-group').style.display = 'none';
+                document.getElementById('edit-name').value = val;
+                document.getElementById('lbl-edit-name').textContent = type === 'mapel' ? "Nama Mapel" : "Nama Kelas";
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-overlay').classList.add('hidden');
+            currentEditIndex = -1;
+        }
+
+        function saveEditMaster() {
+            if (currentEditIndex === -1) return;
+            
+            let newVal = "";
+            if (currentMasterType === 'guru') {
+                const code = document.getElementById('edit-code').value.trim();
+                const name = document.getElementById('edit-name').value.trim();
+                if (!code || !name) return alert("Kode dan Nama harus diisi!");
+                const formattedCode = code.length === 1 ? "0" + code : code;
+                newVal = `${formattedCode} ${name}`;
+            } else {
+                newVal = document.getElementById('edit-name').value.trim();
+                if (!newVal) return alert("Data tidak boleh kosong!");
+            }
+
+            MASTER[currentMasterType][currentEditIndex] = newVal;
+            renderMaster(currentMasterType);
+            saveMasterToCloud(true);
+            closeEditModal();
+        }
+
         function saveMasterToCloud(silent = false) {
             const fd = new FormData(); fd.append('action','save_master');
             fd.append('teachers', JSON.stringify(MASTER.guru)); fd.append('subjects', JSON.stringify(MASTER.mapel)); fd.append('classes', JSON.stringify(MASTER.kelas));
@@ -782,7 +804,7 @@
             fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{ 
                 const tb=document.querySelector('#dash-table-kbm tbody'); 
                 tb.innerHTML=''; 
-                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); 
+                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${(r.Kode?r.Kode+' ':'')+r.Nama}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); 
                 else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; 
             }).catch(() => {
                 document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>';
@@ -791,7 +813,7 @@
             fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{ 
                 const tb=document.querySelector('#dash-table-ujian tbody'); 
                 tb.innerHTML=''; 
-                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${r.Guru}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); 
+                if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${(r.Kode?r.Kode+' ':'')+r.Nama}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); 
                 else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; 
             }).catch(() => {
                 document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>';
