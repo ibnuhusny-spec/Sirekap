@@ -143,8 +143,8 @@
                         <input type="text" id="login-guru-name" placeholder="Ketik Kode / Nama..." oninput="filterList('list-login-guru', 'login-guru-name')" onfocus="filterList('list-login-guru', 'login-guru-name')" autocomplete="off" style="background:white; margin-bottom:0;">
                         <ul class="autocomplete-list" id="list-login-guru"></ul>
                     </div>
-                    <label>PIN (4 Digit Angka)</label>
-                    <input type="password" id="login-guru-pin" placeholder="****" maxlength="4" style="background:white; margin-bottom:15px; text-align:center; font-size:1.2rem; letter-spacing: 5px;" readonly onfocus="this.removeAttribute('readonly');">
+                    <label>PIN Keamanan (6 Angka)</label>
+<input type="password" id="login-guru-pin" placeholder="******" maxlength="6" style="background:white; margin-bottom:15px; text-align:center; font-size:1.2rem; letter-spacing: 5px;" readonly onfocus="this.removeAttribute('readonly');">
                     <div style="display:flex; gap:10px;">
                         <button class="btn-3d btn-success click-sound" id="btn-proses-login-guru" onclick="prosesLoginGuru()">Masuk</button>
                         <button class="btn-3d btn-white click-sound" onclick="cancelLoginGuru()">Batal</button>
@@ -767,3 +767,4 @@
     </script>
 </body>
 </html>
+
