@@ -655,7 +655,7 @@
             const guruPin = localStorage.getItem('sirekap_logged_in_pin');
             if(!guruName || !guruPin) return;
             
-            // SECURITY: Minta data dengan PIN spesifik agar F12 tidak bisa melihat data orang lain
+            // Mengirim Nama dan PIN untuk menembus Gembok F12 Server
             const secureQuery = "&guru=" + encodeURIComponent(guruName) + "&pin=" + encodeURIComponent(guruPin);
 
             Promise.all([
@@ -663,16 +663,28 @@
                 fetch(API_URL+"?action=read&type=ujian" + secureQuery).then(r=>r.json())
             ]).then(([harian, ujian]) => {
                 let cloudData = [];
-                // Data dari server kini sudah di-filter khusus untuk guru ini saja
+                
                 if(harian.result === 'success' && harian.data) harian.data.forEach(d => { cloudData.push({...d, type:'harian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
                 if(ujian.result === 'success' && ujian.data) ujian.data.forEach(d => { cloudData.push({...d, type:'ujian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                
                 myHistoryData = cloudData;
                 localStorage.setItem('sirekap_local_history', JSON.stringify(myHistoryData.slice(0,50)));
+                
+                // Menampilkan kembali Riwayat
                 renderHistory();
-                calcStats();
+                
+                // Menampilkan kembali Total Jam Mengajar Langsung dari Server
+                if (harian.stats) {
+                    document.getElementById('stat-sendiri').textContent = harian.stats.sendiri + " JP"; 
+                    document.getElementById('stat-team').textContent = harian.stats.team + " JP";
+                    const container = document.getElementById('guru-stats-harian');
+                    if (harian.stats.sendiri > 0 || harian.stats.team > 0) container.classList.remove('hidden'); 
+                    else container.classList.add('hidden');
+                } else {
+                    calcStats(); // Cadangan
+                }
             }).catch(e => console.log("History fetch error"));
         }
-
         function renderHistory() {
             const list = document.getElementById('history-list'); list.innerHTML = '';
             myHistoryData.sort((a,b) => b.ID - a.ID);
@@ -767,4 +779,5 @@
     </script>
 </body>
 </html>
+
 
