@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v14.2 - Fix Buttons</title>
+    <title>SIREKAP v15 - Ultimate Security</title>
     <style>
         :root {
             --primary: #4f46e5; --primary-dark: #4338ca; --primary-shadow: #312e81;
@@ -100,11 +100,10 @@
 </head>
 <body>
 
-    <!-- SPLASH SCREEN -->
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 14.2 - Fix Edit Buttons</p>
+        <p class="splash-version">Versi 15.0 - Ultimate Security</p>
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
         <div style="flex-grow:1;"></div>
@@ -114,20 +113,11 @@
         <div style="height: 40px;"></div>
     </div>
 
-    <!-- OVERLAY LOGIN -->
     <div id="overlay" class="hidden">
         <div class="box" id="login-box">
             <img src="logo.png" onerror="this.style.display='none'" style="width:60px; margin-bottom:15px;">
             <h3 style="margin:0 0 20px 0; color:#1e293b;">Login SIREKAP</h3>
             
-            <div id="setup-area" class="hidden" style="margin-top:20px; text-align:left;">
-                <label>Link Google Script</label>
-                <input type="text" id="apiUrl" name="sirekap_api_url_no_remember" placeholder="https://script.google.com/..." autocomplete="off">
-                <label>Link Spreadsheet</label>
-                <input type="text" id="sheetUrl" name="sirekap_sheet_url_no_remember" placeholder="https://docs.google.com/..." autocomplete="off">
-                <button class="btn-3d btn-primary click-sound" onclick="saveApi()">Simpan</button>
-            </div>
-
             <div id="role-area">
                 <button id="btn-guru" class="btn-3d btn-white click-sound" style="margin-bottom:15px; justify-content: flex-start;" onclick="login('guru')">
                     <span style="font-size:1.4rem;">👨‍🏫</span> Masuk sebagai GURU
@@ -146,11 +136,24 @@
                         <button class="btn-3d btn-white click-sound" onclick="cancelAdmin()">Batal</button>
                     </div>
                 </div>
+
+                <div id="login-guru-area" class="hidden" style="margin-top:20px; text-align:left; background:#f8fafc; padding:15px; border-radius:16px; border:1px solid #e2e8f0;">
+                    <label>Nama Guru</label>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <input type="text" id="login-guru-name" placeholder="Ketik Kode / Nama..." oninput="filterList('list-login-guru', 'login-guru-name')" onfocus="filterList('list-login-guru', 'login-guru-name')" autocomplete="off" style="background:white; margin-bottom:0;">
+                        <ul class="autocomplete-list" id="list-login-guru"></ul>
+                    </div>
+                    <label>PIN (4 Digit Angka)</label>
+                    <input type="password" id="login-guru-pin" placeholder="****" maxlength="4" style="background:white; margin-bottom:15px; text-align:center; font-size:1.2rem; letter-spacing: 5px;" readonly onfocus="this.removeAttribute('readonly');">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-3d btn-success click-sound" id="btn-proses-login-guru" onclick="prosesLoginGuru()">Masuk</button>
+                        <button class="btn-3d btn-white click-sound" onclick="cancelLoginGuru()">Batal</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- OVERLAY EDIT MASTER & PASSWORD -->
     <div id="edit-overlay" class="hidden">
         <div class="box" style="width: 90%; max-width: 350px;">
             <h3 style="margin-top:0; color:var(--text-main);">Edit Data</h3>
@@ -183,12 +186,11 @@
         </div>
     </div>
 
-    <!-- NOTIFIKASI -->
     <div id="notif" style="position:fixed; top:20px; right:20px; background:#10b981; color:white; padding:15px 25px; border-radius:50px; display:none; z-index:10000; font-weight:700; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);">Data Tersimpan! ✅</div>
 
     <header>
         <div class="header-content">
-            <div><h1 style="font-size: 1.2rem; font-weight:900; letter-spacing:-0.5px; color:var(--primary-dark);">SIREKAP</h1><p id="status-koneksi" style="font-size: 0.65rem; margin-top:2px; font-weight:700; color:#64748b;">🟡 Offline</p></div>
+            <div><h1 style="font-size: 1.2rem; font-weight:900; letter-spacing:-0.5px; color:var(--primary-dark);">SIREKAP</h1><p id="status-koneksi" style="font-size: 0.65rem; margin-top:2px; font-weight:700; color:#64748b;">🟡 Memeriksa...</p></div>
             <div>
                 <div id="admin-nav" class="hidden" style="display:flex; gap:8px;">
                     <button class="nav-btn click-sound" onclick="switchView('dashboard')">Dashboard</button>
@@ -204,7 +206,6 @@
 
     <div class="container">
 
-        <!-- VIEW: FORM INPUT -->
         <div id="view-form" class="hidden">
             <div class="card">
                 <div class="tab-container">
@@ -212,11 +213,6 @@
                     <button class="tab-btn click-sound" onclick="switchTab('ujian')">📝 Ujian</button>
                 </div>
 
-                <div style="text-align:right; margin-bottom:15px;">
-                    <button id="btn-update-guru" onclick="syncMaster(true)" class="click-sound" style="font-size:0.75rem; background:#eff6ff; border:1px solid #bfdbfe; padding:8px 12px; border-radius:8px; cursor:pointer; color:var(--primary); font-weight:700;">🔄 Update Nama Guru</button>
-                </div>
-
-                <!-- FORM HARIAN -->
                 <form id="form-harian" onsubmit="submitHarian(event)">
                     <input type="hidden" id="edit_id_harian">
                     
@@ -226,8 +222,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Nama Guru (Ketik Kode 01..)</label>
-                        <input type="text" id="guru" placeholder="Ketik Kode / Nama..." required oninput="filterList('list-guru', 'guru'); fetchMyHistory();" onfocus="filterList('list-guru', 'guru')" autocomplete="off">
+                        <label>Nama Anda</label>
+                        <input type="text" id="guru" placeholder="Memuat nama..." required autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru"></ul>
                     </div>
                     
@@ -283,12 +279,11 @@
                     </div>
                 </form>
 
-                <!-- FORM UJIAN -->
                 <form id="form-ujian" class="hidden" onsubmit="submitUjian(event)">
                     <input type="hidden" id="edit_id_ujian">
                     <div class="form-group">
-                        <label>Nama Guru</label>
-                        <input type="text" id="guru_ujian" placeholder="Ketik Kode/Nama..." oninput="filterList('list-guru-ujian', 'guru_ujian'); fetchMyHistory();" onfocus="filterList('list-guru-ujian', 'guru_ujian')" autocomplete="off">
+                        <label>Nama Anda</label>
+                        <input type="text" id="guru_ujian" placeholder="Memuat nama..." autocomplete="off">
                         <ul class="autocomplete-list" id="list-guru-ujian"></ul>
                     </div>
 
@@ -310,15 +305,13 @@
                     </div>
                 </form>
 
-                <!-- RIWAYAT SAYA -->
                 <div id="my-history">
                     <h4 style="margin:0 0 10px 0; color:#64748b;">Riwayat Input Terakhir Saya</h4>
-                    <div class="history-scroll-box"><div id="history-list"><p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Pilih nama guru untuk melihat riwayat.</p></div></div>
+                    <div class="history-scroll-box"><div id="history-list"><p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Riwayat akan dimunculkan di sini.</p></div></div>
                 </div>
             </div>
         </div>
 
-        <!-- DASHBOARD (ADMIN) -->
         <div id="view-dashboard" class="hidden">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -328,7 +321,7 @@
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <button onclick="fetchData()" class="btn-3d btn-primary click-sound">🔄 Refresh Data</button>
                 </div>
-                <div class="excel-btn-group">
+                <div class="excel-btn-group hidden">
                     <a id="btn-open-kbm" href="#" target="_blank" class="btn-excel-sheet btn-excel-kbm click-sound">📂 Data KBM</a>
                     <a id="btn-open-ujian" href="#" target="_blank" class="btn-excel-sheet btn-excel-ujian click-sound">📂 Data Ujian</a>
                 </div>
@@ -343,7 +336,6 @@
             </div>
         </div>
 
-        <!-- MASTER DATA (ADMIN) -->
         <div id="view-master" class="hidden">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -374,8 +366,9 @@
     </div>
 
     <script>
-        let API_URL = localStorage.getItem('sirekap_api') || "";
-        let SHEET_URL = localStorage.getItem('sirekap_sheet') || "";
+        // 🛑 PASTE LINK GOOGLE APPS SCRIPT ANDA DI BAWAH INI (Diapit tanda kutip) 🛑
+        const API_URL = "https://script.google.com/macros/s/AKfycbz4C74MRGrmvihLlpksYwVC-bjRZ56m55hv7vUfth8gWawYU40X6qetDImIb6Ty8hV9/exec"; 
+        
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
         let currentMasterType = 'guru';
@@ -388,25 +381,140 @@
             document.getElementById('time').value = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
             const savedM = localStorage.getItem('sirekap_master');
             if(savedM) MASTER = JSON.parse(savedM);
-            const lastGuru = localStorage.getItem('sirekap_last_guru');
-            if (lastGuru) { document.getElementById('guru').value = lastGuru; document.getElementById('guru_ujian').value = lastGuru; }
-            if(API_URL) { document.getElementById('status-koneksi').textContent = "🟢 Online"; syncMaster(); }
-            if(SHEET_URL) { document.getElementById('btn-open-kbm').href = SHEET_URL; document.getElementById('btn-open-ujian').href = SHEET_URL; }
+            
+            if(API_URL !== "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") { 
+                document.getElementById('status-koneksi').textContent = "🟢 Online"; 
+                syncMaster(false); 
+            } else {
+                document.getElementById('status-koneksi').textContent = "🔴 API Link Kosong"; 
+            }
+
+            // AUTO LOGIN UNTUK GURU
+            const loggedInGuru = localStorage.getItem('sirekap_logged_in_guru');
+            const loggedInPin = localStorage.getItem('sirekap_logged_in_pin');
+            if(loggedInGuru && loggedInPin && API_URL !== "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") {
+                document.getElementById('splash-screen').style.display = 'none';
+                document.getElementById('overlay').classList.add('hidden');
+                switchView('form');
+                document.getElementById('guru-nav').classList.remove('hidden');
+                kunciFormGuru(loggedInGuru);
+                setTimeout(fetchMyHistory, 500);
+            }
+            
             document.querySelectorAll('.click-sound').forEach(b => b.addEventListener('click', playClick));
             document.addEventListener('click', e => { if(!e.target.matches('input')) document.querySelectorAll('.autocomplete-list').forEach(l=>l.style.display='none'); });
         });
 
-        function startApp() { document.getElementById('splash-screen').style.display = 'none'; document.getElementById('overlay').classList.remove('hidden'); if(API_URL) { document.getElementById('setup-area').classList.add('hidden'); document.getElementById('role-area').classList.remove('hidden'); } else { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); } }
+        function startApp() { 
+            document.getElementById('splash-screen').style.display = 'none'; 
+            document.getElementById('overlay').classList.remove('hidden'); 
+            document.getElementById('role-area').classList.remove('hidden'); 
+        }
 
-        function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || "admin123"; }
-        function login(role) { if(role === 'guru') { document.getElementById('overlay').classList.add('hidden'); switchView('form'); document.getElementById('guru-nav').classList.remove('hidden'); syncMaster(); const lg = localStorage.getItem('sirekap_last_guru'); if(lg) fetchMyHistory(); } else { document.getElementById('btn-guru').classList.add('hidden'); document.getElementById('btn-admin').classList.add('hidden'); document.getElementById('pass-area').classList.remove('hidden'); } }
+        function getAdminPass() { return localStorage.getItem('sirekap_admin_pass') || ADMIN_PASS; }
+        
+        function login(role) { 
+            if(role === 'guru') { 
+                document.getElementById('btn-guru').classList.add('hidden'); 
+                document.getElementById('btn-admin').classList.add('hidden'); 
+                document.getElementById('login-guru-area').classList.remove('hidden');
+                syncMaster(false); 
+            } else { 
+                document.getElementById('btn-guru').classList.add('hidden'); 
+                document.getElementById('btn-admin').classList.add('hidden'); 
+                document.getElementById('pass-area').classList.remove('hidden'); 
+            } 
+        }
+
+        function cancelLoginGuru() {
+            document.getElementById('btn-guru').classList.remove('hidden'); 
+            document.getElementById('btn-admin').classList.remove('hidden'); 
+            document.getElementById('login-guru-area').classList.add('hidden');
+            document.getElementById('login-guru-name').value = '';
+            document.getElementById('login-guru-pin').value = '';
+        }
+
+        function prosesLoginGuru() {
+            const nama = document.getElementById('login-guru-name').value;
+            const pin = document.getElementById('login-guru-pin').value;
+            const btn = document.getElementById('btn-proses-login-guru');
+
+            if(!nama || !pin) return alert("Nama dan PIN harus diisi!");
+            if(!MASTER.guru.includes(nama)) return alert("Nama Guru tidak terdaftar di sistem!");
+
+            btn.textContent = "Memeriksa...";
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('action', 'login_guru');
+            fd.append('guru', nama);
+            fd.append('pin', pin);
+
+            fetch(API_URL, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => {
+                if(d.result === 'success') {
+                    // SIMPAN SESI LOGIN (AUTO-LOGIN)
+                    localStorage.setItem('sirekap_logged_in_guru', nama); 
+                    localStorage.setItem('sirekap_logged_in_pin', pin);
+
+                    document.getElementById('overlay').classList.add('hidden'); 
+                    switchView('form'); 
+                    document.getElementById('guru-nav').classList.remove('hidden'); 
+                    kunciFormGuru(nama);
+                    fetchMyHistory();
+                } else {
+                    alert("Gagal: " + d.message); 
+                }
+            })
+            .catch(e => alert("Gagal menghubungi server. Pastikan internet stabil."))
+            .finally(() => {
+                btn.textContent = "Masuk";
+                btn.disabled = false;
+            });
+        }
+
+        function kunciFormGuru(nama) {
+            localStorage.setItem('sirekap_last_guru', nama);
+            const g1 = document.getElementById('guru');
+            g1.value = nama; g1.setAttribute('readonly', true);
+            g1.style.backgroundColor = '#e2e8f0'; g1.style.color = '#475569';
+            g1.style.cursor = 'not-allowed'; g1.removeAttribute('oninput'); g1.removeAttribute('onfocus');
+
+            const g2 = document.getElementById('guru_ujian');
+            g2.value = nama; g2.setAttribute('readonly', true);
+            g2.style.backgroundColor = '#e2e8f0'; g2.style.color = '#475569';
+            g2.style.cursor = 'not-allowed'; g2.removeAttribute('oninput'); g2.removeAttribute('onfocus');
+        }
+
         function cancelAdmin() { document.getElementById('btn-guru').classList.remove('hidden'); document.getElementById('btn-admin').classList.remove('hidden'); document.getElementById('pass-area').classList.add('hidden'); document.getElementById('adminPass_secure').value = ''; }
-        function checkAdmin() { if(document.getElementById('adminPass_secure').value===getAdminPass()) { document.getElementById('overlay').classList.add('hidden'); document.getElementById('admin-nav').classList.remove('hidden'); switchView('dashboard'); fetchData(); renderMaster('guru'); } else alert("Password Salah"); }
+        function checkAdmin() { 
+            if(document.getElementById('adminPass_secure').value===getAdminPass()) { 
+                localStorage.setItem('sirekap_admin_pass', document.getElementById('adminPass_secure').value);
+                document.getElementById('overlay').classList.add('hidden'); 
+                document.getElementById('admin-nav').classList.remove('hidden'); 
+                switchView('dashboard'); fetchData(); renderMaster('guru'); 
+            } else alert("Password Salah"); 
+        }
         function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
         function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
-        function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses!");closeChangePass();} else alert("Gagal"); }
-        function logout() { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('admin-nav').classList.add('hidden'); document.getElementById('guru-nav').classList.add('hidden'); document.getElementById('btn-guru').classList.remove('hidden'); document.getElementById('btn-admin').classList.remove('hidden'); document.getElementById('pass-area').classList.add('hidden'); document.getElementById('adminPass_secure').value = ''; document.getElementById('overlay').classList.add('hidden'); document.getElementById('splash-screen').style.display = 'flex'; }
-        function switchTab(tab) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); if(tab === 'harian') { document.getElementById('form-harian').classList.remove('hidden'); document.getElementById('form-ujian').classList.add('hidden'); } else { document.getElementById('form-harian').classList.add('hidden'); document.getElementById('form-ujian').classList.remove('hidden'); const g = document.getElementById('guru').value; if(g) setTimeout(() => { if(document.getElementById('guru_ujian')) document.getElementById('guru_ujian').value = g; }, 100); } }
+        function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses! Anda bisa login dengan password baru.");closeChangePass();} else alert("Gagal"); }
+        
+        function logout() { 
+            // HAPUS SESI LOGIN SAAT KELUAR
+            localStorage.removeItem('sirekap_logged_in_guru'); 
+            localStorage.removeItem('sirekap_logged_in_pin');
+
+            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); 
+            document.getElementById('admin-nav').classList.add('hidden'); 
+            document.getElementById('guru-nav').classList.add('hidden'); 
+            cancelLoginGuru();
+            cancelAdmin();
+            document.getElementById('overlay').classList.add('hidden'); 
+            document.getElementById('splash-screen').style.display = 'flex'; 
+        }
+
+        function switchTab(tab) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); if(tab === 'harian') { document.getElementById('form-harian').classList.remove('hidden'); document.getElementById('form-ujian').classList.add('hidden'); } else { document.getElementById('form-harian').classList.add('hidden'); document.getElementById('form-ujian').classList.remove('hidden'); } }
 
         function renderUjian() {
             const cat = document.getElementById('cat_ujian').value;
@@ -422,7 +530,7 @@
             container.innerHTML = html;
         }
 
-        function extractCodeName(str) { str = str.trim(); const match = str.match(/^(\d+)[\.\-\s]+(.*)/); return match ? { code: match[1], name: match[2].trim() } : { code: '', name: str }; }
+        function extractCodeName(str) { str = String(str).trim(); const match = str.match(/^(\d+)[\.\-\s]+(.*)/); return match ? { code: match[1], name: match[2].trim() } : { code: '', name: str }; }
 
         function submitUjian(e) {
             e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
@@ -430,11 +538,9 @@
             const action = editId ? 'update' : 'insert_ujian';
             const cat=document.getElementById('cat_ujian').value, guru=document.getElementById('guru_ujian').value, vol=document.getElementById('vol_u').value;
             let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
-            localStorage.setItem('sirekap_last_guru', guru);
+            if(!guru) return alert("Nama Guru tidak boleh kosong!");
             const gn = extractCodeName(guru);
             const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, KodeGuru: gn.code, NamaGuru: gn.name, Guru: guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
-            if (action === 'insert_ujian' && checkDuplicate(payload, 'ujian')) { if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return; }
             sendData(payload, btn, 'ujian');
         }
 
@@ -443,30 +549,21 @@
             const editId = document.getElementById('edit_id_harian').value;
             const action = editId ? 'update' : 'insert';
             const guru=document.getElementById('guru').value, mapel=document.getElementById('mapel').value, kelas=document.getElementById('kelas').value;
-            if(!MASTER.guru.includes(guru)) return alert("Nama Guru tidak terdaftar!");
-            localStorage.setItem('sirekap_last_guru', guru);
+            if(!guru) return alert("Nama Guru tidak boleh kosong!");
             const gn = extractCodeName(guru);
             const payload = { action: action, type: 'harian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, Waktu:document.getElementById('time').value, KodeGuru: gn.code, NamaGuru: gn.name, Guru: guru, Status:document.getElementById('isSubstitute').checked?'Badal':'Tetap', Mapel:mapel, Kelas:kelas, Mode:document.querySelector('input[name="mode"]:checked').value, 'Jam Sendiri':document.querySelector('input[name="mode"]:checked').value=='sendiri'?document.getElementById('hours').value:0, 'Jam Team':document.querySelector('input[name="mode"]:checked').value=='berdua'?document.getElementById('hours').value:0 };
-            if (action === 'insert' && checkDuplicate(payload, 'harian')) { if(!confirm("⚠️ Data ini sepertinya sudah ada hari ini. Tetap kirim?")) return; }
             sendData(payload, btn, 'harian');
-        }
-
-        function checkDuplicate(data, type) {
-            if (myHistoryData.length === 0) return false;
-            return myHistoryData.some(item => {
-                if (item.type !== type) return false;
-                const itemFullName = item.Guru || ((item.Kode ? item.Kode + " " : "") + item.Nama);
-                const dataFullName = data.Guru;
-                if (item.Tanggal !== data.Tanggal) return false;
-                if (itemFullName !== dataFullName) return false;
-                if (type === 'harian') return item.Mapel === data.Mapel && item.Kelas === data.Kelas;
-                else return item.Kategori === data.Kategori && item.Rincian === data.Rincian;
-            });
         }
 
         function sendData(p, btn, type) {
             btn.disabled=true; btn.textContent="Mengirim...";
-            const fd=new FormData(); for(let k in p) fd.append(k, p[k]);
+            const fd=new FormData(); 
+            for(let k in p) fd.append(k, p[k]);
+            
+            // SECURITY: Lampirkan PIN atau Admin Pass ke setiap pengiriman data
+            fd.append('pin', localStorage.getItem('sirekap_logged_in_pin') || '');
+            fd.append('admin_pass', getAdminPass());
+
             const tempHistory = {...p}; 
             fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
                 if(d.result==='success') {
@@ -475,11 +572,11 @@
                     if(p.action === 'update') cancelEdit(type);
                     else {
                         if(type==='harian'){ document.getElementById('mapel').value=''; document.getElementById('kelas').value=''; document.getElementById('isSubstitute').checked=false; }
-                        else { document.getElementById('guru_ujian').value=''; if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
+                        else { if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
                     }
                     fetchMyHistory();
                 } else alert("Gagal: " + d.message);
-            }).catch(()=>alert("Error")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
+            }).catch(()=>alert("Error koneksi.")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
         }
 
         function filterList(listId, inputId) {
@@ -487,16 +584,22 @@
             let data = []; if(listId.includes('guru')) data = MASTER.guru; else if(listId.includes('mapel')) data = MASTER.mapel; else if(listId.includes('kelas')) data = MASTER.kelas;
             list.innerHTML = ''; const filtered = data.filter(item => item.toLowerCase().includes(val));
             if(filtered.length === 0) list.innerHTML = '<li style="padding:10px; color:red;">Tidak ditemukan. Hubungi Admin.</li>';
-            else filtered.sort().forEach(item => { const li = document.createElement('li'); li.className = 'autocomplete-item'; li.textContent = item; li.onmousedown = () => { input.value = item; list.style.display='none'; playClick(); if(listId.includes('guru')) fetchMyHistory(); }; list.appendChild(li); });
+            else filtered.sort().forEach(item => { const li = document.createElement('li'); li.className = 'autocomplete-item'; li.textContent = item; li.onmousedown = () => { input.value = item; list.style.display='none'; playClick(); }; list.appendChild(li); });
             list.style.display = 'block';
         }
 
-        function syncMaster(v) {
-            if(!API_URL) return;
-            const btnUpdate = document.getElementById('btn-update-guru'); if(v && btnUpdate) { btnUpdate.textContent = "..."; btnUpdate.disabled = true; }
+        function syncMaster(showNotifParam = false) {
+            if(API_URL === "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") return;
             fetch(API_URL+"?action=get_master").then(r=>r.json()).then(d=>{
-                if(d.result==='success'){ if(d.teachers.length) MASTER.guru = d.teachers; if(d.subjects.length) MASTER.mapel = d.subjects; if(d.classes.length) MASTER.kelas = d.classes; localStorage.setItem('sirekap_master', JSON.stringify(MASTER)); if(currentMasterType && !document.getElementById('view-master').classList.contains('hidden')) renderMaster(currentMasterType); if(v) alert("Update Berhasil!"); }
-            }).catch(e => console.log(e)).finally(()=>{ if(v && btnUpdate) { btnUpdate.textContent = "🔄 Update Nama Guru"; btnUpdate.disabled = false; } });
+                if(d.result==='success'){ 
+                    if(d.teachers.length) MASTER.guru = d.teachers; 
+                    if(d.subjects.length) MASTER.mapel = d.subjects; 
+                    if(d.classes.length) MASTER.kelas = d.classes; 
+                    localStorage.setItem('sirekap_master', JSON.stringify(MASTER)); 
+                    if(currentMasterType && !document.getElementById('view-master').classList.contains('hidden')) renderMaster(currentMasterType); 
+                    if(showNotifParam) showNotif("Data Master Diperbarui"); 
+                }
+            }).catch(e => console.log("Gagal sync master"));
         }
 
         function renderMaster(type) {
@@ -517,33 +620,52 @@
         }
         function closeEditModal() { document.getElementById('edit-overlay').classList.add('hidden'); currentEditIndex = -1; }
         function saveEditMaster() { if (currentEditIndex === -1) return; let newVal = ""; if (currentMasterType === 'guru') { const c = document.getElementById('edit-code').value.trim(), n = document.getElementById('edit-name').value.trim(); if (!c || !n) return alert("Kode dan Nama harus diisi!"); newVal = `${c.length === 1 ? "0" + c : c} ${n}`; } else { newVal = document.getElementById('edit-name').value.trim(); if (!newVal) return alert("Data tidak boleh kosong!"); } MASTER[currentMasterType][currentEditIndex] = newVal; renderMaster(currentMasterType); saveMasterToCloud(true); closeEditModal(); }
-        function saveMasterToCloud(silent = false) { const fd = new FormData(); fd.append('action','save_master'); fd.append('teachers', JSON.stringify(MASTER.guru)); fd.append('subjects', JSON.stringify(MASTER.mapel)); fd.append('classes', JSON.stringify(MASTER.kelas)); fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success'){localStorage.setItem('sirekap_master',JSON.stringify(MASTER)); if(!silent) showNotif("Data Master Tersimpan!"); } else if(!silent) alert("Gagal Simpan"); }); }
         
-        function fetchData() {
-            fetch(API_URL+"?action=read").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-kbm tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${(r.Kode?r.Kode+' ':'')+r.Nama}</td><td>${r.Mapel||'-'}<br><small>${r.Kelas||''}</small></td><td>${r['Jam Sendiri']||r['Jam Team']} JP</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; }).catch(() => { document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
-            fetch(API_URL+"?action=read_ujian").then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-ujian tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${r.Tanggal}</td><td>${(r.Kode?r.Kode+' ':'')+r.Nama}</td><td>${r.Kategori}<br><small>${r.Rincian}</small></td><td>${r.Volume}</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Gagal Muat</td></tr>'; }).catch(() => { document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
+        function saveMasterToCloud(silent = false) { 
+            const fd = new FormData(); 
+            fd.append('action','save_master'); 
+            fd.append('admin_pass', getAdminPass()); // SECURITY
+            fd.append('teachers', JSON.stringify(MASTER.guru)); 
+            fd.append('subjects', JSON.stringify(MASTER.mapel)); 
+            fd.append('classes', JSON.stringify(MASTER.kelas)); 
+            fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success'){localStorage.setItem('sirekap_master',JSON.stringify(MASTER)); if(!silent) showNotif("Data Master Tersimpan!"); } else if(!silent) alert("Gagal: " + d.message); }); 
         }
+        
+        function escapeHTML(str) { if (!str) return ""; return String(str).replace(/[&<>'"]/g, match => { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[match]; }); }
+
+        function fetchData() {
+            // SECURITY: Minta data dengan password admin
+            const adminQuery = "&admin_pass=" + encodeURIComponent(getAdminPass());
+            
+            fetch(API_URL+"?action=read" + adminQuery).then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-kbm tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Mapel||'-')}<br><small>${escapeHTML(r.Kelas||'')}</small></td><td>${escapeHTML(r['Jam Sendiri']||r['Jam Team'])} JP</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; }).catch(() => { document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
+            
+            fetch(API_URL+"?action=read_ujian" + adminQuery).then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-ujian tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Kategori)}<br><small>${escapeHTML(r.Rincian)}</small></td><td>${escapeHTML(r.Volume)}</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; }).catch(() => { document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
+        }
+        
         function filterMasterDisplay() { const query = document.getElementById('search-master').value.toLowerCase(); document.querySelectorAll('.master-item').forEach(i => { const text = i.querySelector('span').textContent.toLowerCase(); i.style.display = text.includes(query) ? 'flex' : 'none'; }); }
         function showNotif(msg) { const n = document.getElementById('notif'); n.textContent = msg; n.style.display='block'; setTimeout(()=>n.style.display='none', 2000); }
         const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
         function playClick(){ if(audioCtx.state==='suspended')audioCtx.resume(); const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.00001,audioCtx.currentTime+0.1);o.stop(audioCtx.currentTime+0.1); }
         
         function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
-        function saveApi() { localStorage.setItem('sirekap_api', document.getElementById('apiUrl').value); localStorage.setItem('sirekap_sheet', document.getElementById('sheetUrl').value); location.reload(); }
-        function showSetup() { document.getElementById('setup-area').classList.remove('hidden'); document.getElementById('role-area').classList.add('hidden'); }
         
         function fetchMyHistory() {
-            if(!API_URL) return;
+            if(API_URL === "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") return;
             const guruName = document.getElementById('guru').value || document.getElementById('guru_ujian').value;
-            if(!guruName) return;
+            const guruPin = localStorage.getItem('sirekap_logged_in_pin');
+            if(!guruName || !guruPin) return;
+            
+            // SECURITY: Minta data dengan PIN spesifik agar F12 tidak bisa melihat data orang lain
+            const secureQuery = "&guru=" + encodeURIComponent(guruName) + "&pin=" + encodeURIComponent(guruPin);
+
             Promise.all([
-                fetch(API_URL+"?action=read&type=harian").then(r=>r.json()),
-                fetch(API_URL+"?action=read&type=ujian").then(r=>r.json())
+                fetch(API_URL+"?action=read&type=harian" + secureQuery).then(r=>r.json()),
+                fetch(API_URL+"?action=read&type=ujian" + secureQuery).then(r=>r.json())
             ]).then(([harian, ujian]) => {
                 let cloudData = [];
-                const match = (item) => { const combined = (item.Kode ? item.Kode + " " : "") + item.Nama; return combined === guruName || item.Nama === guruName; };
-                if(harian.result === 'success') harian.data.forEach(d => { if(match(d)) cloudData.push({...d, type:'harian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
-                if(ujian.result === 'success') ujian.data.forEach(d => { if(match(d)) cloudData.push({...d, type:'ujian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                // Data dari server kini sudah di-filter khusus untuk guru ini saja
+                if(harian.result === 'success' && harian.data) harian.data.forEach(d => { cloudData.push({...d, type:'harian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                if(ujian.result === 'success' && ujian.data) ujian.data.forEach(d => { cloudData.push({...d, type:'ujian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
                 myHistoryData = cloudData;
                 localStorage.setItem('sirekap_local_history', JSON.stringify(myHistoryData.slice(0,50)));
                 renderHistory();
@@ -557,25 +679,24 @@
             if(myHistoryData.length === 0) { list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Tidak ada riwayat.</p>'; return; }
             myHistoryData.forEach(item => {
                 const isHarian = item.type === 'harian';
-                const desc = isHarian ? `${item.Mapel} (${item.Kelas})` : `${item.Kategori} - ${item.Rincian}`;
-                const val = isHarian ? `${item['Jam Sendiri'] || item['Jam Team']} JP` : `Vol: ${item.Volume}`;
+                const desc = isHarian ? `${escapeHTML(item.Mapel)} (${escapeHTML(item.Kelas)})` : `${escapeHTML(item.Kategori)} - ${escapeHTML(item.Rincian)}`;
+                const val = isHarian ? `${escapeHTML(item['Jam Sendiri'] || item['Jam Team'])} JP` : `Vol: ${escapeHTML(item.Volume)}`;
                 const badgeColor = isHarian ? '#e0f2fe' : '#dcfce7';
                 const div = document.createElement('div'); div.className = 'history-item';
-                div.innerHTML = `<div><span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; padding:2px 6px; border-radius:4px;">${isHarian?'KBM':'UJIAN'}</span><span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${item.Tanggal}</span><div style="font-weight:600; font-size:0.9rem;">${desc}</div><div style="font-size:0.8rem; color:#64748b;">${val}</div></div><div class="history-actions"><button class="btn-icon btn-edit-item click-sound" onclick="editEntry('${item.ID}')">✏️</button><button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}','${item.type}')">🗑️</button></div>`;
+                div.innerHTML = `<div><span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; padding:2px 6px; border-radius:4px;">${isHarian?'KBM':'UJIAN'}</span><span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${escapeHTML(item.Tanggal)}</span><div style="font-weight:600; font-size:0.9rem;">${desc}</div><div style="font-size:0.8rem; color:#64748b;">${val}</div></div><div class="history-actions"><button class="btn-icon btn-edit-item click-sound" onclick="editEntry('${item.ID}')">✏️</button><button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}','${item.type}')">🗑️</button></div>`;
                 list.appendChild(div);
             });
         }
         
         function editEntry(id) {
             const item = myHistoryData.find(d => String(d.ID) === String(id));
-            if (!item) return alert("Data tidak ditemukan di memori lokal.");
+            if (!item) return alert("Data tidak ditemukan.");
 
             switchTab(item.type);
             
             if(item.type === 'harian') {
                 document.getElementById('edit_id_harian').value = item.ID;
                 document.getElementById('date').value = item.Tanggal; 
-                document.getElementById('guru').value = item.Guru;
                 document.getElementById('mapel').value = item.Mapel;
                 document.getElementById('kelas').value = item.Kelas;
                 const modeVal = item.Mode ? item.Mode.toLowerCase() : '';
@@ -591,7 +712,6 @@
                 document.getElementById('form-harian').scrollIntoView({behavior:'smooth'});
             } else {
                 document.getElementById('edit_id_ujian').value = item.ID;
-                document.getElementById('guru_ujian').value = item.Guru;
                 const catSelect = document.getElementById('cat_ujian');
                 const catVal = item.Kategori ? item.Kategori.toLowerCase() : '';
                 for(let i=0; i<catSelect.options.length; i++){ if(catSelect.options[i].value === catVal) catSelect.selectedIndex = i; }
@@ -609,8 +729,15 @@
 
         function deleteEntry(id, type) {
             if(confirm("Yakin ingin menghapus data ini?")) {
-                const fd = new FormData(); fd.append('action', 'delete'); fd.append('ID', id); fd.append('type', type);
-                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal Hapus"); });
+                const fd = new FormData(); 
+                fd.append('action', 'delete'); 
+                fd.append('ID', id); 
+                fd.append('type', type);
+                // SECURITY
+                fd.append('guru', localStorage.getItem('sirekap_logged_in_guru'));
+                fd.append('pin', localStorage.getItem('sirekap_logged_in_pin'));
+
+                fetch(API_URL, {method:'POST', body:fd}).then(r=>r.json()).then(d=>{ if(d.result==='success') { showNotif("Data Terhapus! 🗑️"); fetchMyHistory(); } else alert("Gagal: " + d.message); });
             }
         }
 
