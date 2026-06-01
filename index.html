@@ -97,6 +97,23 @@
         .hidden { display: none !important; }
         @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; gap: 0; } .splash-app-name { font-size: 1.8rem; } }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // URL dan Kunci ini HARUS SAMA dengan yang ada di Portal Terpadu
+    const supabaseUrl = 'https://gquohpkbygzkuybgblmp.supabase.co';
+    const supabaseKey = 'sb_publishable_xcOviXGQvu-Ua3U3sRY_wg_AHlCMYMt'; 
+    
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Langsung periksa apakah pengunjung membawa tiket dari Portal
+    _supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        // Jika tidak ada tiket, langsung tendang kembali ke Portal!
+        window.location.replace("https://portal-terpadu.vercel.app/");
+      }
+      // Jika ada tiket, Supabase otomatis membersihkan URL dan membiarkan mereka masuk
+    });
+  </script>
 </head>
 <body>
 
