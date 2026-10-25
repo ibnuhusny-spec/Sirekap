@@ -892,14 +892,31 @@ function setupSlipGaji() {
     .setBackground(GREEN_HEADER)
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
-  // Buat Data Validation dropdown di M5 yang menerima angka 1 s/d 40 (baik ketik 1 digit maupun 2 digit)
+  // Buat Data Validation dropdown di M5 secara dinamis membaca dari Master_Gaji (mencakup s/d kode 60)
   try {
     const listKode = [];
-    for (let i = 1; i <= 40; i++) {
-      listKode.push(String(i)); // "1", "2", ...
+    const lastRowGaji = sMasterGaji.getLastRow();
+    if (lastRowGaji >= 2) {
+      const kodes = sMasterGaji.getRange(2, 1, lastRowGaji - 1, 1).getValues();
+      kodes.forEach(k => {
+        const str = String(k[0]).trim();
+        if (str) {
+          const num = parseInt(str, 10);
+          if (!isNaN(num)) {
+            listKode.push(String(num));
+            if (num < 10) listKode.push("0" + num);
+          } else {
+            listKode.push(str);
+          }
+        }
+      });
     }
+    for (let i = 1; i <= 60; i++) {
+      listKode.push(String(i));
+    }
+    const uniqueKodes = [...new Set(listKode)].sort((a, b) => (parseInt(a, 10) || 0) - (parseInt(b, 10) || 0));
     const rule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(listKode, true)
+      .requireValueInList(uniqueKodes, true)
       .setAllowInvalid(true)
       .build();
     sSlip.getRange("M5").setDataValidation(rule);
