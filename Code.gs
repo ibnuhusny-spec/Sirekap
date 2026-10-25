@@ -848,11 +848,10 @@ function setupSlipGaji() {
         setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
       }
 
-      // 2. Tunjangan Wali Kelas (Kolom H) jika ada nominalnya
-      if (rawWali > 0) {
-        const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawWali + ')';
-        setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
-      }
+      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis 100.000 jika Jabatan (Kolom C) mengandung "wali kelas" & 0 jika bukan atau Sertifikasi = "Ya"
+      const waliNominal = (rawWali > 0 && rawWali !== 100000) ? rawWali : 100000;
+      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); ' + waliNominal + '; 0))';
+      setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
 
       // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * 7500 & 0 jika Sertifikasi = "Ya"
       const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * 7500))';
@@ -1398,9 +1397,10 @@ function sinkronkanMasterGaji() {
         const formulaGajiPokok = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(O' + r + '=""; 0; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=12; 500000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=9; 450000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=7; 400000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=5; 375000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=3; 300000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=2; 150000; 0))))))))';
         setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
       }
-      if (rawWali > 0) {
-        setSafeFormula(sMasterGaji.getRange(r, 8), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawWali + ')');
-      }
+      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis 100.000 jika Jabatan (Kolom C) mengandung "wali kelas" & 0 jika bukan atau Sertifikasi = "Ya"
+      const waliNominal = (rawWali > 0 && rawWali !== 100000) ? rawWali : 100000;
+      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); ' + waliNominal + '; 0))';
+      setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
       // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * 7500 & 0 jika Sertifikasi = "Ya"
       const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * 7500))';
       setSafeFormula(sMasterGaji.getRange(r, 9), formulaKonsumsi);
