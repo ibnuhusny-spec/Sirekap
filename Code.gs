@@ -866,6 +866,9 @@ function setupSlipGaji() {
     Logger.log("Breakapart log: " + e.toString());
   }
 
+  // Bersihkan teks lama di area slip (C1:P35) agar tidak menyisakan teks bertumpuk dari merge sebelumnya
+  sSlip.getRange("C1:P35").clearContent();
+
   // Atur Lebar Kolom (A - N) Sesuai Layout Baru
   sSlip.setColumnWidth(1, 135); // A (Banner)
   sSlip.setColumnWidth(2, 20);  // B (Pemisah / Kolom Kosong)
@@ -1247,10 +1250,124 @@ function urutkanUlangKodeGuru() {
     sUjian.getRange(2, 3, newUjianCodes.length, 1).setValues(newUjianCodes);
   }
 
-  // Perbarui Master_Gaji dan format Slip_Gaji secara otomatis
-  setupSlipGaji();
+  // Perbarui Master_Gaji saja tanpa menyentuh tampilan Slip_Gaji yang sudah dirapikan user
+  sinkronkanMasterGaji();
 
   SpreadsheetApp.getActiveSpreadsheet().toast("Susunan berhasil dirapikan: Putra (01-20), Putri (21-50)!", "Sukses 🟢", 5);
+}
+
+/**
+ * Menyinkronkan data guru ke Master_Gaji TANPA menyentuh/mengubah sheet Slip_Gaji
+ * sehingga format dan kerapian lembar cetak slip gaji yang diatur pengguna tidak pernah rusak/tertimpa.
+ */
+function sinkronkanMasterGaji() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sMasterGaji = ss.getSheetByName("Master_Gaji");
+  if (!sMasterGaji) return;
+
+  const headerGaji = [
+    "Kode", "Nama Guru", "Jabatan", "Alamat", "No HP",
+    "Gaji Pokok", "Tunjangan Jabatan", "Tunjangan Wali Kelas",
+    "Tunjangan Konsumsi Transport", "Tunjangan Kesehatan",
+    "Pinjaman Kas", "Iuran SPP", "Donasi", "Lainnya",
+    "TMT (Tgl Masuk)", "Sertifikasi", "Potongan Ujian 25%"
+  ];
+
+  const sMaster = getSheet(SHEET_MASTER);
+  const lastMasterRow = sMaster.getLastRow();
+  let teacherList = [];
+  if (lastMasterRow >= 2) {
+    teacherList = sMaster.getRange(2, 1, lastMasterRow - 1, 2).getValues();
+  }
+
+  // Simpan data lama di Master_Gaji agar data yang sudah diisi admin tidak hilang
+  const existingGaji = {};
+  const existingGajiByName = {};
+  const curLastRow = sMasterGaji.getLastRow();
+  const curLastCol = sMasterGaji.getLastColumn();
+  if (curLastRow >= 2 && curLastCol > 0) {
+    const oldVals = sMasterGaji.getRange(2, 1, curLastRow - 1, curLastCol).getValues();
+    oldVals.forEach(r => {
+      const k = String(r[0]).trim();
+      const n = String(r[1]).trim().toLowerCase();
+      if (k) existingGaji[k] = r;
+      if (n) existingGajiByName[n] = r;
+    });
+  }
+
+  const gajiRows = [];
+  teacherList.forEach(t => {
+    const rawCode = String(t[0]).trim();
+    if (!rawCode && !t[1]) return;
+    const formattedCode = rawCode.length === 1 ? "0" + rawCode : rawCode;
+    const name = String(t[1]).trim();
+    const nameLower = name.toLowerCase();
+
+    let rowData = [];
+    const exist = existingGaji[formattedCode] || existingGaji[rawCode] || existingGajiByName[nameLower];
+    if (exist) {
+      rowData = exist.slice(0, headerGaji.length);
+      while (rowData.length < headerGaji.length) {
+        if (rowData.length === 14) rowData.push("");
+        else if (rowData.length === 15) rowData.push("Tidak");
+        else if (rowData.length === 16) rowData.push("Tidak");
+        else rowData.push(0);
+      }
+      rowData[0] = formattedCode;
+      rowData[1] = name;
+    } else {
+      const isKepsek = (formattedCode === "01");
+      const isMutiah = (formattedCode === "25" || name.indexOf("Muti'ah") !== -1);
+      rowData = [
+        formattedCode, name,
+        isKepsek ? "Kepala Sekolah" : (isMutiah ? "Wali Kelas 2A Putra" : "Guru"),
+        isMutiah ? "PERUM. ABC MACCOPA" : "-", "-",
+        0, isKepsek ? 500000 : 0, isMutiah ? 100000 : 0, 0, 50000,
+        0, 0, 0, 0, "", "Tidak", "Tidak"
+      ];
+    }
+    gajiRows.push(rowData);
+  });
+
+  // Tulis ulang hanya sheet Master_Gaji
+  sMasterGaji.clear();
+  sMasterGaji.getRange(1, 1, 1, headerGaji.length).setValues([headerGaji]);
+  sMasterGaji.getRange(1, 1, 1, headerGaji.length).setBackground("#4f46e5").setFontColor("#ffffff").setFontWeight("bold");
+  sMasterGaji.setFrozenRows(1);
+  sMasterGaji.getRange("A:A").setNumberFormat("@");
+
+  if (gajiRows.length > 0) {
+    sMasterGaji.getRange(2, 1, gajiRows.length, headerGaji.length).setValues(gajiRows);
+    sMasterGaji.getRange(2, 6, gajiRows.length, 9).setNumberFormat("#,##0");
+    sMasterGaji.getRange(2, 15, gajiRows.length, 1).setNumberFormat("yyyy-mm-dd");
+
+    for (let idx = 0; idx < gajiRows.length; idx++) {
+      const r = idx + 2;
+      const jabatan = String(gajiRows[idx][2] || "").trim().toLowerCase();
+      const rawWali = Number(gajiRows[idx][7]) || (jabatan.indexOf("wali kelas") !== -1 ? 100000 : 0);
+      const rawKonsumsi = Number(gajiRows[idx][8]) || 0;
+
+      if (jabatan !== "kepala sekolah") {
+        const formulaGajiPokok = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(O' + r + '=""; 0; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=12; 500000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=9; 450000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=7; 400000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=5; 375000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=3; 300000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=2; 150000; 0))))))))';
+        setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
+      }
+      if (rawWali > 0) {
+        setSafeFormula(sMasterGaji.getRange(r, 8), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawWali + ')');
+      }
+      if (rawKonsumsi > 0) {
+        setSafeFormula(sMasterGaji.getRange(r, 9), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawKonsumsi + ')');
+      }
+      setSafeFormula(sMasterGaji.getRange(r, 10), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; 50000)');
+    }
+
+    try {
+      const ruleYaTidak = SpreadsheetApp.newDataValidation()
+        .requireValueInList(["Ya", "Tidak"], true)
+        .setAllowInvalid(true)
+        .build();
+      sMasterGaji.getRange(2, 16, gajiRows.length, 2).setDataValidation(ruleYaTidak);
+    } catch(e) {}
+  }
 }
 
 /**
