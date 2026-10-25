@@ -802,17 +802,38 @@ function setupSlipGaji() {
     // Format tanggal untuk kolom O (TMT)
     sMasterGaji.getRange(2, 15, gajiRows.length, 1).setNumberFormat("yyyy-mm-dd");
 
-    // Pasang rumus otomatis Gaji Pokok berdasarkan Masa Kerja (kolom O) & Pengecualian Sertifikasi (kolom P)
-    // Serta kecualikan Kepala Sekolah (bebas diisi nominal manual)
+    // Pasang rumus otomatis di Master_Gaji:
+    // 1. Gaji Pokok (Kolom F / 6): otomatis masa kerja & 0 jika Sertifikasi = "Ya"
+    // 2. Tunjangan Wali Kelas (Kolom H / 8): otomatis 0 jika Sertifikasi = "Ya"
+    // 3. Tunjangan Konsumsi Transport (Kolom I / 9): otomatis 0 jika Sertifikasi = "Ya"
+    // 4. Tunjangan Kesehatan (Kolom J / 10): otomatis 0 jika Sertifikasi = "Ya", 50.000 jika "Tidak"
     for (let idx = 0; idx < gajiRows.length; idx++) {
       const r = idx + 2;
       const jabatan = String(gajiRows[idx][2] || "").trim().toLowerCase();
-      
-      // Jika BUKAN Kepala Sekolah, pasang rumus otomatis masa kerja di kolom F (Gaji Pokok)
+      const rawWali = Number(gajiRows[idx][7]) || (jabatan.indexOf("wali kelas") !== -1 ? 100000 : 0);
+      const rawKonsumsi = Number(gajiRows[idx][8]) || 0;
+
+      // 1. Gaji Pokok (Kolom F)
       if (jabatan !== "kepala sekolah") {
         const formulaGajiPokok = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(O' + r + '=""; 0; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=12; 500000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=9; 450000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=7; 400000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=5; 375000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=3; 300000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=2; 150000; 0))))))))';
         setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
       }
+
+      // 2. Tunjangan Wali Kelas (Kolom H) jika ada nominalnya
+      if (rawWali > 0) {
+        const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawWali + ')';
+        setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
+      }
+
+      // 3. Tunjangan Konsumsi Transport (Kolom I) jika ada nominalnya
+      if (rawKonsumsi > 0) {
+        const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; ' + rawKonsumsi + ')';
+        setSafeFormula(sMasterGaji.getRange(r, 9), formulaKonsumsi);
+      }
+
+      // 4. Tunjangan Kesehatan (Kolom J): otomatis 0 jika Sertifikasi = "Ya", 50.000 jika "Tidak"
+      const formulaKesehatan = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; 50000)';
+      setSafeFormula(sMasterGaji.getRange(r, 10), formulaKesehatan);
     }
 
     // Pasang Data Validation Dropdown di Kolom P (Sertifikasi) dan Kolom Q (Potongan Ujian 25%)
