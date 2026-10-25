@@ -1054,11 +1054,89 @@ function setSafeFormula(range, formula) {
 }
 
 /**
+ * Mengurutkan ulang (Re-number) seluruh kode guru secara berurutan (01, 02, 03, ...)
+ * dan otomatis menyinkronkan kodenya di sheet Master, Master_Gaji, KBM, dan Ujian
+ * sehingga jika ada guru yang keluar (misal 07), nomor di bawahnya (08 dst) naik rapi
+ * tanpa merusak riwayat presensi jam mengajar yang sudah ada.
+ */
+function urutkanUlangKodeGuru() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sMaster = getSheet(SHEET_MASTER);
+  const lastRowMaster = sMaster.getLastRow();
+  if (lastRowMaster < 2) return;
+
+  const masterData = sMaster.getRange(2, 1, lastRowMaster - 1, 3).getValues();
+  
+  // Mapping dari Nama Guru -> Kode Baru
+  const codeMapping = {};
+  const newMasterRows = [];
+  let currentNum = 1;
+
+  for (let i = 0; i < masterData.length; i++) {
+    const rawOldCode = String(masterData[i][0]).trim();
+    const name = String(masterData[i][1]).trim();
+    const pin = masterData[i][2] || "123456";
+
+    // Abaikan baris kosong atau guru yang sudah ditandai keluar
+    if (!name || name.toLowerCase().indexOf("[keluar]") !== -1) continue;
+
+    const newCode = currentNum < 10 ? "0" + currentNum : String(currentNum);
+    codeMapping[name.toLowerCase()] = newCode;
+    if (rawOldCode) {
+      const formattedOld = rawOldCode.length === 1 ? "0" + rawOldCode : rawOldCode;
+      codeMapping["old_" + formattedOld] = newCode;
+    }
+
+    newMasterRows.push([newCode, name, pin]);
+    currentNum++;
+  }
+
+  // 1. Tulis ulang Sheet Master dengan kode urut baru
+  sMaster.getRange(2, 1, lastRowMaster - 1, 3).clearContent();
+  sMaster.getRange("A:A").setNumberFormat("@");
+  if (newMasterRows.length > 0) {
+    sMaster.getRange(2, 1, newMasterRows.length, 3).setValues(newMasterRows);
+  }
+
+  // 2. Sinkronkan riwayat di Sheet KBM agar jam mengajar tetap akurat
+  const sKBM = ss.getSheetByName(SHEET_KBM);
+  if (sKBM && sKBM.getLastRow() >= 2) {
+    const kbmData = sKBM.getRange(2, 4, sKBM.getLastRow() - 1, 2).getValues(); // Kolom D: Kode, Kolom E: Nama
+    const newKbmCodes = [];
+    for (let i = 0; i < kbmData.length; i++) {
+      const rowName = String(kbmData[i][1]).trim().toLowerCase();
+      const updatedCode = codeMapping[rowName] || kbmData[i][0];
+      newKbmCodes.push([updatedCode]);
+    }
+    sKBM.getRange(2, 4, newKbmCodes.length, 1).setValues(newKbmCodes);
+  }
+
+  // 3. Sinkronkan riwayat di Sheet Ujian
+  const sUjian = ss.getSheetByName(SHEET_UJIAN);
+  if (sUjian && sUjian.getLastRow() >= 2) {
+    const ujianData = sUjian.getRange(2, 3, sUjian.getLastRow() - 1, 2).getValues(); // Kolom C: Kode, Kolom D: Nama
+    const newUjianCodes = [];
+    for (let i = 0; i < ujianData.length; i++) {
+      const rowName = String(ujianData[i][1]).trim().toLowerCase();
+      const updatedCode = codeMapping[rowName] || ujianData[i][0];
+      newUjianCodes.push([updatedCode]);
+    }
+    sUjian.getRange(2, 3, newUjianCodes.length, 1).setValues(newUjianCodes);
+  }
+
+  // 4. Perbarui Master_Gaji dan format Slip_Gaji secara otomatis
+  setupSlipGaji();
+
+  SpreadsheetApp.getActiveSpreadsheet().toast("Nomor kode guru berhasil diurutkan ulang dan disinkronkan ke seluruh sheet!", "Sukses 🟢", 5);
+}
+
+/**
  * Menu otomatis di Google Spreadsheet: memudahkan admin menjalankan fungsi tanpa buka Apps Script
  */
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("📋 SiRekap")
     .addItem("🖨️ Buat / Perbarui Slip Gaji", "setupSlipGaji")
+    .addItem("🔢 Urutkan Ulang Nomor Kode Guru (Otomatis)", "urutkanUlangKodeGuru")
     .addToUi();
 }
