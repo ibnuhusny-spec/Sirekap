@@ -54,7 +54,7 @@ Sebelumnya, sistem terhubung ke Google Spreadsheet dengan puluhan sheet yang mem
 1. Buka file [`index.html`](index.html).
 2. Pada baris konfigurasi `API_URL`, tempelkan URL Web App baru Anda:
    ```javascript
-   const API_URL = "PASTE_URL_WEB_APP_ANDA_DISINI";
+   const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbxG4BYzo-3-Zu1Ugj-9jd71qx7ImDk_VCoqiJxNF5nFmeDR9c8jkg6CZfP9knTnMIv2/exec";
    ```
    *Atau Anda juga bisa mengubahnya langsung melalui menu pengaturan Admin di aplikasi web.*
 
