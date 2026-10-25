@@ -748,6 +748,9 @@ function setupSlipGaji() {
     });
   }
 
+  const sPresensi = ss.getSheetByName("Presensi");
+  const attendanceMap = sPresensi ? parseSheetPresensi(sPresensi) : {};
+
   // Bangun daftar baris Master_Gaji lengkap (18 Kolom)
   const gajiRows = [];
   teacherList.forEach(t => {
@@ -757,6 +760,7 @@ function setupSlipGaji() {
     const name = String(t[1]).trim();
     const nameLower = name.toLowerCase();
     const cleanName = nameLower.replace(/[^a-z0-9]/g, "");
+    const presensiHari = cariKehadiranGuru(name, attendanceMap);
     
     let rowData = [];
     // Prioritaskan pencocokan berdasarkan NAMA GURU agar jabatan, alamat, TMT, dll tidak tertukar saat nomor kode diurutkan
@@ -770,7 +774,9 @@ function setupSlipGaji() {
         else if (rowData.length === 17) {
           // Kolom R: Kehadiran Transport (Hari)
           let defaultHari = 0;
-          if (exist[8] !== undefined && Number(exist[8]) > 0) {
+          if (presensiHari !== null) {
+            defaultHari = presensiHari;
+          } else if (exist[8] !== undefined && Number(exist[8]) > 0) {
             defaultHari = Number(exist[8]) <= 31 ? Number(exist[8]) : Math.round(Number(exist[8]) / 7500);
           }
           rowData.push(defaultHari);
@@ -779,6 +785,9 @@ function setupSlipGaji() {
       }
       rowData[0] = formattedCode;
       rowData[1] = name;
+      if (presensiHari !== null) {
+        rowData[17] = presensiHari;
+      }
       // Pastikan nomor HP berupa format teks dan pulihkan angka 0 di depan jika terpotong
       if (rowData[4] !== undefined && rowData[4] !== null) {
         let hpStr = String(rowData[4]).trim();
@@ -806,7 +815,7 @@ function setupSlipGaji() {
         "",                                    // TMT (Tgl Masuk)
         "Tidak",                               // Sertifikasi (Ya/Tidak)
         "Tidak",                               // Potongan Ujian 25% (Ya/Tidak)
-        0                                      // Kehadiran Transport (Hari)
+        presensiHari !== null ? presensiHari : 0
       ];
     }
     gajiRows.push(rowData);
@@ -1317,8 +1326,8 @@ function sinkronkanMasterGaji() {
       if (k) existingGaji[k] = r;
       if (n) existingGajiByName[n] = r;
       if (nClean) existingGajiByNameClean[nClean] = r;
-    });
-  }
+  const sPresensi = ss.getSheetByName("Presensi");
+  const attendanceMap = sPresensi ? parseSheetPresensi(sPresensi) : {};
 
   const gajiRows = [];
   teacherList.forEach(t => {
@@ -1328,6 +1337,7 @@ function sinkronkanMasterGaji() {
     const name = String(t[1]).trim();
     const nameLower = name.toLowerCase();
     const cleanName = nameLower.replace(/[^a-z0-9]/g, "");
+    const presensiHari = cariKehadiranGuru(name, attendanceMap);
 
     let rowData = [];
     // Prioritaskan pencocokan berdasarkan NAMA GURU agar jabatan, alamat, TMT, dll tidak tertukar saat nomor kode diurutkan
@@ -1341,7 +1351,9 @@ function sinkronkanMasterGaji() {
         else if (rowData.length === 17) {
           // Kolom R: Kehadiran Transport (Hari)
           let defaultHari = 0;
-          if (exist[8] !== undefined && Number(exist[8]) > 0) {
+          if (presensiHari !== null) {
+            defaultHari = presensiHari;
+          } else if (exist[8] !== undefined && Number(exist[8]) > 0) {
             defaultHari = Number(exist[8]) <= 31 ? Number(exist[8]) : Math.round(Number(exist[8]) / 7500);
           }
           rowData.push(defaultHari);
@@ -1350,6 +1362,10 @@ function sinkronkanMasterGaji() {
       }
       rowData[0] = formattedCode;
       rowData[1] = name;
+      // Jika sheet Presensi ada dan memuat kehadiran guru ini, gunakan angka terbaru dari Presensi
+      if (presensiHari !== null) {
+        rowData[17] = presensiHari;
+      }
       // Pastikan nomor HP berupa format teks dan pulihkan angka 0 di depan jika terpotong
       if (rowData[4] !== undefined && rowData[4] !== null) {
         let hpStr = String(rowData[4]).trim();
@@ -1366,7 +1382,8 @@ function sinkronkanMasterGaji() {
         isKepsek ? "Kepala Sekolah" : (isMutiah ? "Wali Kelas 2A Putra" : "Guru"),
         isMutiah ? "PERUM. ABC MACCOPA" : "-", "-",
         0, isKepsek ? 500000 : 0, isMutiah ? 100000 : 0, 0, 50000,
-        0, 0, 0, 0, "", "Tidak", "Tidak", 0
+        0, 0, 0, 0, "", "Tidak", "Tidak",
+        presensiHari !== null ? presensiHari : 0
       ];
     }
     gajiRows.push(rowData);
@@ -1419,6 +1436,168 @@ function sinkronkanMasterGaji() {
 }
 
 /**
+ * =========================================================================
+ * INTEGRASI PRESENSI KEHADIRAN (OTOMATIS DARI SHEET 'Presensi')
+ * =========================================================================
+ * Menarik total kehadiran dari Sheet Presensi ke Kolom R di Master_Gaji.
+ * Otomatis menghitung Tunjangan Konsumsi Transport di Kolom I (Hari x 7.500).
+ */
+function tarikKehadiranPresensi() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sPresensi = ss.getSheetByName("Presensi");
+  const sMasterGaji = ss.getSheetByName("Master_Gaji");
+
+  if (!sPresensi) {
+    SpreadsheetApp.getUi().alert(
+      "Sheet 'Presensi' Belum Ditemukan ⚠️\n\n" +
+      "Silakan buat Sheet baru bernama 'Presensi' di spreadsheet ini, " +
+      "lalu tempelkan (paste) seluruh data presensi pengajar Anda di sheet tersebut."
+    );
+    return;
+  }
+
+  if (!sMasterGaji || sMasterGaji.getLastRow() < 2) {
+    SpreadsheetApp.getUi().alert("Sheet 'Master_Gaji' belum siap. Jalankan 'Urutkan Ulang Nomor Kode Guru' terlebih dahulu.");
+    return;
+  }
+
+  // Ambil pemetaan kehadiran dari Sheet Presensi
+  const attendanceMap = parseSheetPresensi(sPresensi);
+  const foundNames = Object.keys(attendanceMap);
+
+  if (foundNames.length === 0) {
+    SpreadsheetApp.getUi().alert(
+      "Data Presensi Tidak Dikenali ⚠️\n\n" +
+      "Tidak ditemukan data kehadiran di sheet 'Presensi'. " +
+      "Pastikan tabel presensi memiliki kolom 'TOTAL KEHADIRAN' dengan angka jumlah kehadiran di bawahnya."
+    );
+    return;
+  }
+
+  // Update Kolom R di Master_Gaji
+  const lastRowGaji = sMasterGaji.getLastRow();
+  const gajiData = sMasterGaji.getRange(2, 1, lastRowGaji - 1, 18).getValues();
+  let updatedCount = 0;
+
+  for (let i = 0; i < gajiData.length; i++) {
+    const teacherName = String(gajiData[i][1] || "").trim();
+    if (!teacherName) continue;
+
+    const matchedHari = cariKehadiranGuru(teacherName, attendanceMap);
+    if (matchedHari !== null) {
+      sMasterGaji.getRange(i + 2, 18).setValue(matchedHari);
+      updatedCount++;
+    }
+  }
+
+  SpreadsheetApp.getActiveSpreadsheet().toast(
+    "Berhasil memperbarui kehadiran " + updatedCount + " guru dari Sheet Presensi! Tunjangan transport otomatis terhitung di Kolom I.",
+    "Sukses 🟢",
+    6
+  );
+}
+
+/**
+ * Membaca sheet Presensi dan mengekstrak jumlah total kehadiran setiap pengajar.
+ * Fokus pada teks tabel: nama guru di atas tabel dan angka terbesar di kolom TOTAL KEHADIRAN.
+ */
+function parseSheetPresensi(sPresensi) {
+  const data = sPresensi.getDataRange().getValues();
+  const attendanceMap = {};
+  let lastDetectedTeacher = "";
+
+  for (let r = 0; r < data.length; r++) {
+    const row = data[r];
+    const c0 = String(row[0] || "").trim();
+
+    // 1. Deteksi nama guru di atas tabel (baris judul sebelum tabel rincian)
+    if (c0.length >= 4 && !/^(presensi|kabupaten|bulan|id|no\.|hari|maros|kepala)/i.test(c0) && isNaN(c0)) {
+      if (c0.indexOf("31 Oktober") === -1 && c0.indexOf("2026") === -1) {
+        lastDetectedTeacher = c0;
+      }
+    }
+
+    // 2. Deteksi header 'TOTAL KEHADIRAN' dan ambil angka kehadiran tepat di bawahnya
+    for (let c = 0; c < row.length; c++) {
+      const headerText = String(row[c] || "").trim().toUpperCase();
+      if (headerText === "TOTAL KEHADIRAN" || headerText.indexOf("TOTAL KEHADIRAN") !== -1) {
+        if (r + 1 < data.length) {
+          const rawVal = data[r + 1][c];
+          if (rawVal !== "" && rawVal !== null && !isNaN(rawVal)) {
+            const totalNum = Number(rawVal);
+            let teacherName = lastDetectedTeacher;
+
+            // Jika belum dapat dari baris atas, cek kolom NAMA PENGAJAR di baris data r+1
+            if (!teacherName && row.length > 4) {
+              const possibleName = String(data[r + 1][4] || "").trim();
+              if (possibleName && isNaN(possibleName) && !/^(tepat|terlambat|tidak)/i.test(possibleName)) {
+                teacherName = possibleName;
+              }
+            }
+
+            if (teacherName) {
+              attendanceMap[normalizeTeacherName(teacherName)] = totalNum;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Cadangan: Rekap kolom ringkasan (jika ada kolom nama pengajar & total kehadiran di kanan)
+    for (let c = 0; c < row.length - 1; c++) {
+      const nameCell = String(row[c] || "").trim();
+      const numCell = row[c + 1];
+      if (nameCell.length >= 4 && typeof numCell === "number" && numCell >= 0 && numCell <= 31) {
+        if (!/^(senin|selasa|rabu|kamis|jum'?at|sabtu|ahad|id|no|total|hari|tepat|terlambat|tidak)/i.test(nameCell)) {
+          const cleanKey = normalizeTeacherName(nameCell);
+          if (attendanceMap[cleanKey] === undefined) {
+            attendanceMap[cleanKey] = numCell;
+          }
+        }
+      }
+    }
+  }
+
+  return attendanceMap;
+}
+
+/**
+ * Normalisasi nama guru untuk pencocokan toleran terhadap gelar, spasi, dan variasi ejaan.
+ */
+function normalizeTeacherName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z]/g, "")
+    .replace(/dh/g, "d")
+    .replace(/th/g, "t")
+    .replace(/kh/g, "k")
+    .replace(/h/g, "");
+}
+
+/**
+ * Mencari jumlah kehadiran guru berdasarkan nama dengan pencocokan cerdas.
+ */
+function cariKehadiranGuru(targetName, attendanceMap) {
+  const normTarget = normalizeTeacherName(targetName);
+  if (attendanceMap[normTarget] !== undefined) {
+    return attendanceMap[normTarget];
+  }
+
+  for (const k in attendanceMap) {
+    if (normTarget.indexOf(k) !== -1 || k.indexOf(normTarget) !== -1) {
+      return attendanceMap[k];
+    }
+    const subTarget = normTarget.slice(0, 8);
+    const subK = k.slice(0, 8);
+    if (subTarget.length >= 6 && subK.length >= 6 && subTarget === subK) {
+      return attendanceMap[k];
+    }
+  }
+
+  return null;
+}
+
+/**
  * Menu otomatis di Google Spreadsheet: memudahkan admin menjalankan fungsi tanpa buka Apps Script
  */
 function onOpen() {
@@ -1426,5 +1605,6 @@ function onOpen() {
     .createMenu("📋 SiRekap")
     .addItem("🖨️ Buat / Perbarui Slip Gaji", "setupSlipGaji")
     .addItem("🔢 Urutkan Ulang Nomor Kode Guru (Otomatis)", "urutkanUlangKodeGuru")
+    .addItem("📥 Tarik Kehadiran dari Sheet Presensi", "tarikKehadiranPresensi")
     .addToUi();
 }
