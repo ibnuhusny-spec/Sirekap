@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SIREKAP v15 - Standalone Security</title>
+    <title>SIREKAP v16 - SDIT Qurratu A'yun Al-Islami</title>
     <style>
         :root {
             --primary: #4f46e5; --primary-dark: #4338ca; --primary-shadow: #312e81;
@@ -103,7 +103,7 @@
     <div id="splash-screen">
         <img src="logo.png" alt="Logo" class="splash-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2997/2997235.png'">
         <h1 class="splash-app-name">SIREKAP</h1>
-        <p class="splash-version">Versi 15.0 - Ultimate Security</p>
+        <p class="splash-version">Versi 16.0 - Simplified Edition</p>
         <h2 class="splash-school">SDIT QURRATU A'YUN AL-ISLAMI</h2>
         <p class="splash-sub">KABUPATEN MAROS</p>
         <div style="flex-grow:1;"></div>
@@ -183,6 +183,21 @@
         <div style="display:flex; gap:10px; margin-top:10px;">
             <button class="btn-3d btn-success click-sound" onclick="saveNewPassword()">Simpan</button>
             <button class="btn-3d btn-danger click-sound" onclick="closeChangePass()">Batal</button>
+        </div>
+    </div>
+
+    <div class="box hidden" id="server-settings-box" style="z-index: 10001; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:400px;">
+        <h3 style="margin:0 0 15px 0; color:var(--text-main);">⚙️ Pengaturan Server API</h3>
+        <div style="text-align:left;">
+            <label>URL Web App Google Script</label>
+            <input type="text" id="custom-api-url" placeholder="https://script.google.com/macros/s/.../exec" style="background:#f8fafc; font-size:0.85rem;">
+            <p style="color:#64748b; margin-top:-10px; margin-bottom:12px; font-size:0.75rem;">Kosongkan jika ingin kembali ke URL bawaan.</p>
+            <label>Link Google Spreadsheet (Opsional)</label>
+            <input type="text" id="custom-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/..." style="background:#f8fafc; font-size:0.85rem;">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:5px;">
+            <button class="btn-3d btn-success click-sound" onclick="saveServerSettings()">Simpan</button>
+            <button class="btn-3d btn-danger click-sound" onclick="closeServerSettings()">Batal</button>
         </div>
     </div>
 
@@ -314,16 +329,16 @@
 
         <div id="view-dashboard" class="hidden">
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
                     <h2 style="margin:0;">📊 Dashboard</h2>
-                    <button onclick="openChangePass()" class="nav-btn click-sound" style="background:#fff; border:1px solid #cbd5e1; font-weight:700;">🔒 Ganti Password</button>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="openServerSettings()" class="nav-btn click-sound" style="background:#fff; border:1px solid #cbd5e1; font-weight:700;">⚙️ Server API</button>
+                        <button onclick="openChangePass()" class="nav-btn click-sound" style="background:#fff; border:1px solid #cbd5e1; font-weight:700;">🔒 Password</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button onclick="fetchData()" class="btn-3d btn-primary click-sound">🔄 Refresh Data</button>
-                </div>
-                <div class="excel-btn-group hidden">
-                    <a id="btn-open-kbm" href="#" target="_blank" class="btn-excel-sheet btn-excel-kbm click-sound">📂 Data KBM</a>
-                    <a id="btn-open-ujian" href="#" target="_blank" class="btn-excel-sheet btn-excel-ujian click-sound">📂 Data Ujian</a>
+                <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <button onclick="fetchData()" class="btn-3d btn-primary click-sound" style="flex:1;">🔄 Refresh Data</button>
+                    <a id="btn-open-spreadsheet" href="#" target="_blank" class="btn-3d btn-success click-sound hidden" style="width:auto; padding:12px 18px; text-decoration:none;">📂 Buka Spreadsheet</a>
                 </div>
                 <div class="dash-section">
                     <div class="dash-header"><h3>Absensi KBM Harian</h3></div>
@@ -367,7 +382,9 @@
 
     <script>
         // 🛑 PASTE LINK GOOGLE APPS SCRIPT ANDA DI BAWAH INI (Diapit tanda kutip) 🛑
-        const API_URL = "https://script.google.com/macros/s/AKfycbz4C74MRGrmvihLlpksYwVC-bjRZ56m55hv7vUfth8gWawYU40X6qetDImIb6Ty8hV9/exec"; 
+        const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbz4C74MRGrmvihLlpksYwVC-bjRZ56m55hv7vUfth8gWawYU40X6qetDImIb6Ty8hV9/exec"; 
+        let API_URL = localStorage.getItem('sirekap_custom_api_url') || DEFAULT_API_URL;
+        let SHEET_URL = localStorage.getItem('sirekap_custom_sheet_url') || "";
         
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
@@ -493,12 +510,61 @@
                 localStorage.setItem('sirekap_admin_pass', document.getElementById('adminPass_secure').value);
                 document.getElementById('overlay').classList.add('hidden'); 
                 document.getElementById('admin-nav').classList.remove('hidden'); 
-                switchView('dashboard'); fetchData(); renderMaster('guru'); 
+                switchView('dashboard'); 
+                updateSpreadsheetButton();
+                fetchData(); 
+                renderMaster('guru'); 
             } else alert("Password Salah"); 
         }
-        function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
+        function openChangePass() { document.getElementById('overlay').classList.remove('hidden'); document.getElementById('login-box').classList.add('hidden'); document.getElementById('server-settings-box').classList.add('hidden'); document.getElementById('change-pass-box').classList.remove('hidden'); }
         function closeChangePass() { document.getElementById('overlay').classList.add('hidden'); document.getElementById('login-box').classList.remove('hidden'); document.getElementById('change-pass-box').classList.add('hidden'); }
         function saveNewPassword() { const n=document.getElementById('newPass').value; if(document.getElementById('oldPass').value===getAdminPass() && n){localStorage.setItem('sirekap_admin_pass',n);alert("Sukses! Anda bisa login dengan password baru.");closeChangePass();} else alert("Gagal"); }
+        
+        function openServerSettings() {
+            document.getElementById('overlay').classList.remove('hidden');
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('change-pass-box').classList.add('hidden');
+            document.getElementById('custom-api-url').value = localStorage.getItem('sirekap_custom_api_url') || '';
+            document.getElementById('custom-sheet-url').value = localStorage.getItem('sirekap_custom_sheet_url') || '';
+            document.getElementById('server-settings-box').classList.remove('hidden');
+        }
+        function closeServerSettings() {
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('server-settings-box').classList.add('hidden');
+        }
+        function saveServerSettings() {
+            const newApi = document.getElementById('custom-api-url').value.trim();
+            const newSheet = document.getElementById('custom-sheet-url').value.trim();
+            if(newApi) {
+                localStorage.setItem('sirekap_custom_api_url', newApi);
+                API_URL = newApi;
+            } else {
+                localStorage.removeItem('sirekap_custom_api_url');
+                API_URL = DEFAULT_API_URL;
+            }
+            if(newSheet) {
+                localStorage.setItem('sirekap_custom_sheet_url', newSheet);
+                SHEET_URL = newSheet;
+            } else {
+                localStorage.removeItem('sirekap_custom_sheet_url');
+                SHEET_URL = "";
+            }
+            updateSpreadsheetButton();
+            showNotif("Pengaturan Server Disimpan! ✅");
+            closeServerSettings();
+            syncMaster(false);
+            fetchData();
+        }
+        function updateSpreadsheetButton() {
+            const btn = document.getElementById('btn-open-spreadsheet');
+            if(!btn) return;
+            if(SHEET_URL) {
+                btn.href = SHEET_URL;
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
         
         function logout() { 
             // HAPUS SESI LOGIN SAAT KELUAR
