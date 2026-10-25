@@ -775,10 +775,14 @@ function setupSlipGaji() {
     .setBackground(GREEN_HEADER)
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
-  // Buat Data Validation dropdown di M5 agar bisa diketik atau dipilih langsung
+  // Buat Data Validation dropdown di M5 yang menerima angka 1 s/d 40 (baik ketik 1 digit maupun 2 digit)
   try {
+    const listKode = [];
+    for (let i = 1; i <= 40; i++) {
+      listKode.push(String(i)); // "1", "2", ...
+    }
     const rule = SpreadsheetApp.newDataValidation()
-      .requireValueInRange(sMasterGaji.getRange("A2:A50"))
+      .requireValueInList(listKode, true)
       .setAllowInvalid(true)
       .build();
     sSlip.getRange("M5").setDataValidation(rule);
