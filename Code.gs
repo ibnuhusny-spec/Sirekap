@@ -771,6 +771,14 @@ function setupSlipGaji() {
       }
       rowData[0] = formattedCode;
       rowData[1] = name;
+      // Pastikan nomor HP berupa format teks dan pulihkan angka 0 di depan jika terpotong
+      if (rowData[4] !== undefined && rowData[4] !== null) {
+        let hpStr = String(rowData[4]).trim();
+        if (/^8[0-9]{8,12}$/.test(hpStr)) {
+          hpStr = "0" + hpStr;
+        }
+        rowData[4] = hpStr;
+      }
     } else {
       // Data default jika baru pertama kali dibuat
       const isKepsek = (formattedCode === "01");
@@ -795,15 +803,17 @@ function setupSlipGaji() {
     gajiRows.push(rowData);
   });
 
-  // Tulis ulang Master_Gaji secara rapi dan pastikan kolom A plain text
+  // Tulis ulang Master_Gaji secara rapi dan pastikan kolom A & E plain text
   sMasterGaji.clear();
   sMasterGaji.getRange(1, 1, 1, headerGaji.length).setValues([headerGaji]);
   const hRange = sMasterGaji.getRange(1, 1, 1, headerGaji.length);
   hRange.setBackground("#4f46e5").setFontColor("#ffffff").setFontWeight("bold");
   sMasterGaji.setFrozenRows(1);
   sMasterGaji.getRange("A:A").setNumberFormat("@");
+  sMasterGaji.getRange("E:E").setNumberFormat("@"); // Kolom No HP selalu teks biasa agar angka 0 tidak hilang
 
   if (gajiRows.length > 0) {
+    sMasterGaji.getRange(2, 5, gajiRows.length, 1).setNumberFormat("@");
     sMasterGaji.getRange(2, 1, gajiRows.length, headerGaji.length).setValues(gajiRows);
     
     // Format angka keuangan untuk kolom nominal (F s/d N)
@@ -962,7 +972,7 @@ function setupSlipGaji() {
 
   sSlip.getRange("H6").setValue("HP").setFontWeight("bold").setBorder(true, true, true, true, false, false);
   setSafeFormula(safeMerge(sSlip.getRange("I6:K6")), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 5; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 5; 0); "-")))');
-  sSlip.getRange("I6:K6").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+  sSlip.getRange("I6:K6").setHorizontalAlignment("left").setNumberFormat("@").setBorder(true, true, true, true, false, false);
 
   // --- ROW 9 & 10: TABEL PENERIMAAN ---
   sSlip.getRange("C9").setValue("PENERIMAAN").setFontWeight("bold").setFontSize(11);
@@ -1325,6 +1335,14 @@ function sinkronkanMasterGaji() {
       }
       rowData[0] = formattedCode;
       rowData[1] = name;
+      // Pastikan nomor HP berupa format teks dan pulihkan angka 0 di depan jika terpotong
+      if (rowData[4] !== undefined && rowData[4] !== null) {
+        let hpStr = String(rowData[4]).trim();
+        if (/^8[0-9]{8,12}$/.test(hpStr)) {
+          hpStr = "0" + hpStr;
+        }
+        rowData[4] = hpStr;
+      }
     } else {
       const isKepsek = (formattedCode === "01");
       const isMutiah = (formattedCode === "25" || name.indexOf("Muti'ah") !== -1);
@@ -1345,8 +1363,10 @@ function sinkronkanMasterGaji() {
   sMasterGaji.getRange(1, 1, 1, headerGaji.length).setBackground("#4f46e5").setFontColor("#ffffff").setFontWeight("bold");
   sMasterGaji.setFrozenRows(1);
   sMasterGaji.getRange("A:A").setNumberFormat("@");
+  sMasterGaji.getRange("E:E").setNumberFormat("@"); // Kolom No HP selalu teks biasa agar angka 0 tidak hilang
 
   if (gajiRows.length > 0) {
+    sMasterGaji.getRange(2, 5, gajiRows.length, 1).setNumberFormat("@");
     sMasterGaji.getRange(2, 1, gajiRows.length, headerGaji.length).setValues(gajiRows);
     sMasterGaji.getRange(2, 6, gajiRows.length, 9).setNumberFormat("#,##0");
     sMasterGaji.getRange(2, 15, gajiRows.length, 1).setNumberFormat("yyyy-mm-dd");
