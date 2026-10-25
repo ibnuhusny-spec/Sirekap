@@ -72,6 +72,30 @@ Tabel akan ter-update otomatis secara *real-time* setiap kali ada guru yang mene
 
 ---
 
+## 🖨️ Cetak Slip Gaji Otomatis (1 Ketik Kode Langsung Jadi!)
+
+Aplikasi ini kini dilengkapi fitur **Slip Gaji Siap Cetak** otomatis yang terhubung langsung ke data presensi KBM dan Ujian:
+
+### Cara Mengaktifkan:
+1. Buka editor **Google Apps Script** di spreadsheet Anda.
+2. Pilih fungsi **`setupSlipGaji`** di menu fungsi atas, lalu klik **Jalankan (Run)**.
+3. Otomatis akan muncul 2 Sheet baru:
+   - **`Slip_Gaji`**: Format slip resmi (warna hijau pastel, Times New Roman, bingkai cetak rapi, lengkap dengan rincian penerimaan dan potongan).
+   - **`Master_Gaji`**: Tempat mengatur gaji pokok, jabatan, dan tunjangan tetap masing-masing guru.
+
+### Cara Penggunaan:
+1. Buka Sheet **`Slip_Gaji`**.
+2. Masukkan **KODE GURU** pada sel **`M4`** (misal ketik `25` atau `01`).
+3. Seluruh data otomatis terisi seketika:
+   - Nama Guru, Jabatan, Alamat, dan No HP.
+   - Gaji Pokok & Tunjangan Tetap (Wali Kelas, Kesehatan, dll).
+   - **Insentif Jam Mengajar (Rp.12.000 & Rp.10.000)** langsung dihitung dari jam presensi di sheet `KBM`!
+   - **Insentif Ujian** langsung diambil dari sheet `Ujian`!
+   - Total Penghasilan, Potongan, dan Total Gaji Bersih otomatis terjumlah.
+4. Tekan **Ctrl + P** (Print) -> Siap cetak atau simpan PDF 1 halaman penuh!
+
+---
+
 ## 🔒 Keamanan Sistem
 
 - **PIN Keamanan 6 Digit**: Setiap guru memiliki PIN unik di Sheet `Master`. Guru lain tidak dapat melihat atau mengedit riwayat guru lain.
