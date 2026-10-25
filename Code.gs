@@ -1326,6 +1326,9 @@ function sinkronkanMasterGaji() {
       if (k) existingGaji[k] = r;
       if (n) existingGajiByName[n] = r;
       if (nClean) existingGajiByNameClean[nClean] = r;
+    });
+  }
+
   const sPresensi = ss.getSheetByName("Presensi");
   const attendanceMap = sPresensi ? parseSheetPresensi(sPresensi) : {};
 
