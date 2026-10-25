@@ -70,6 +70,15 @@ function doGet(e) {
       return responseJSON({ result: "success", message: "SiRekap Backend v16 Online 🟢", timestamp: new Date().toISOString() });
     }
 
+    // 5. Setup Otomatis Slip Gaji (Bisa diakses langsung lewat link / browser)
+    if (action === "setup_slip_gaji") {
+      if (!validasiAdmin(adminPass)) {
+        return responseJSON({ result: "error", message: "Akses Ditolak. Password Admin salah." });
+      }
+      setupSlipGaji();
+      return responseJSON({ result: "success", message: "Sheet Slip_Gaji & Master_Gaji Berhasil Dibuat! Periksa spreadsheet Anda." });
+    }
+
     return responseJSON({ result: "error", message: "Aksi GET tidak dikenali: " + action });
   } catch (err) {
     return responseJSON({ result: "error", message: err.toString() });
