@@ -732,13 +732,16 @@ function setupSlipGaji() {
   
   // Simpan data lama di Master_Gaji agar data yang sudah diisi admin tidak hilang
   const existingGaji = {};
+  const existingGajiByName = {};
   const curLastRow = sMasterGaji.getLastRow();
   const curLastCol = sMasterGaji.getLastColumn();
   if (curLastRow >= 2 && curLastCol > 0) {
     const oldVals = sMasterGaji.getRange(2, 1, curLastRow - 1, curLastCol).getValues();
     oldVals.forEach(r => {
       const k = String(r[0]).trim();
+      const n = String(r[1]).trim().toLowerCase();
       if (k) existingGaji[k] = r;
+      if (n) existingGajiByName[n] = r;
     });
   }
 
@@ -749,10 +752,11 @@ function setupSlipGaji() {
     if (!rawCode && !t[1]) return;
     const formattedCode = rawCode.length === 1 ? "0" + rawCode : rawCode;
     const name = String(t[1]).trim();
+    const nameLower = name.toLowerCase();
     
     let rowData = [];
-    if (existingGaji[formattedCode] || existingGaji[rawCode]) {
-      const exist = existingGaji[formattedCode] || existingGaji[rawCode];
+    const exist = existingGaji[formattedCode] || existingGaji[rawCode] || existingGajiByName[nameLower];
+    if (exist) {
       rowData = exist.slice(0, headerGaji.length);
       while (rowData.length < headerGaji.length) {
         if (rowData.length === 14) rowData.push("");        // Kolom O: TMT
@@ -1075,10 +1079,12 @@ function setSafeFormula(range, formula) {
 }
 
 /**
- * Mengurutkan ulang (Re-number) seluruh kode guru secara berurutan (01, 02, 03, ...)
- * dan otomatis menyinkronkan kodenya di sheet Master, Master_Gaji, KBM, dan Ujian
- * sehingga jika ada guru yang keluar (misal 07), nomor di bawahnya (08 dst) naik rapi
- * tanpa merusak riwayat presensi jam mengajar yang sudah ada.
+ * Mengurutkan ulang (Re-number) seluruh kode guru sesuai aturan blok:
+ * - GURU PUTRA : 01 s/d 20
+ * - GURU PUTRI : 21 s/d 50
+ * Otomatis menyinkronkan kodenya di sheet Master, Master_Gaji, KBM, dan Ujian
+ * sehingga jika ada guru yang keluar atau masuk, kelompok putra dan putri
+ * tidak saling menggeser serta riwayat jam mengajar lama tetap aman.
  */
 function urutkanUlangKodeGuru() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -1088,10 +1094,28 @@ function urutkanUlangKodeGuru() {
 
   const masterData = sMaster.getRange(2, 1, lastRowMaster - 1, 3).getValues();
   
-  // Mapping dari Nama Guru -> Kode Baru
-  const codeMapping = {};
-  const newMasterRows = [];
-  let currentNum = 1;
+  // Daftar nama guru putri SDIT Qurratu A'yun untuk identifikasi kelompok
+  const knownPutri = [
+    "mardia habe", "nur apni", "amalia ahsan", "dewi syahara", "ina mulyati",
+    "humairah", "fitriani", "satriani", "nur wahidah", "muti'ah",
+    "liza fany", "darmawati", "ilma", "nurdiyawanti", "rahmawati basri",
+    "sri wahyuni", "ihwana", "surianti", "hajriani", "nur rizky",
+    "hebrianti", "dhea rahmiyanti"
+  ];
+
+  function isPutri(name, rawOldCode) {
+    const n = name.toLowerCase().trim();
+    const oldNum = parseInt(rawOldCode, 10);
+    if (!isNaN(oldNum) && oldNum >= 21) return true;
+    for (let kp of knownPutri) {
+      if (n.indexOf(kp) !== -1) return true;
+    }
+    if (n.startsWith("dra.") || n.startsWith("hj.") || n.indexOf(" s.") !== -1) return true;
+    return false;
+  }
+
+  const putraList = [];
+  const putriList = [];
 
   for (let i = 0; i < masterData.length; i++) {
     const rawOldCode = String(masterData[i][0]).trim();
@@ -1101,16 +1125,41 @@ function urutkanUlangKodeGuru() {
     // Abaikan baris kosong atau guru yang sudah ditandai keluar
     if (!name || name.toLowerCase().indexOf("[keluar]") !== -1) continue;
 
-    const newCode = currentNum < 10 ? "0" + currentNum : String(currentNum);
-    codeMapping[name.toLowerCase()] = newCode;
-    if (rawOldCode) {
-      const formattedOld = rawOldCode.length === 1 ? "0" + rawOldCode : rawOldCode;
+    if (isPutri(name, rawOldCode)) {
+      putriList.push({ oldCode: rawOldCode, name: name, pin: pin });
+    } else {
+      putraList.push({ oldCode: rawOldCode, name: name, pin: pin });
+    }
+  }
+
+  const codeMapping = {};
+  const newMasterRows = [];
+
+  // 1. Urutkan Guru Putra (01 s/d 20)
+  let numPutra = 1;
+  putraList.forEach(p => {
+    const newCode = numPutra < 10 ? "0" + numPutra : String(numPutra);
+    codeMapping[p.name.toLowerCase()] = newCode;
+    if (p.oldCode) {
+      const formattedOld = p.oldCode.length === 1 ? "0" + p.oldCode : p.oldCode;
       codeMapping["old_" + formattedOld] = newCode;
     }
+    newMasterRows.push([newCode, p.name, p.pin]);
+    numPutra++;
+  });
 
-    newMasterRows.push([newCode, name, pin]);
-    currentNum++;
-  }
+  // 2. Urutkan Guru Putri (21 s/d 50)
+  let numPutri = 21;
+  putriList.forEach(p => {
+    const newCode = String(numPutri);
+    codeMapping[p.name.toLowerCase()] = newCode;
+    if (p.oldCode) {
+      const formattedOld = p.oldCode.length === 1 ? "0" + p.oldCode : p.oldCode;
+      codeMapping["old_" + formattedOld] = newCode;
+    }
+    newMasterRows.push([newCode, p.name, p.pin]);
+    numPutri++;
+  });
 
   // 1. Tulis ulang Sheet Master dengan kode urut baru
   sMaster.getRange(2, 1, lastRowMaster - 1, 3).clearContent();
@@ -1148,7 +1197,7 @@ function urutkanUlangKodeGuru() {
   // 4. Perbarui Master_Gaji dan format Slip_Gaji secara otomatis
   setupSlipGaji();
 
-  SpreadsheetApp.getActiveSpreadsheet().toast("Nomor kode guru berhasil diurutkan ulang dan disinkronkan ke seluruh sheet!", "Sukses 🟢", 5);
+  SpreadsheetApp.getActiveSpreadsheet().toast("Nomor kode berhasil diurutkan: Putra (01-20), Putri (21-50)!", "Sukses 🟢", 5);
 }
 
 /**
