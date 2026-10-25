@@ -714,6 +714,16 @@ function setupSlipGaji() {
     sSlip = ss.insertSheet("Slip_Gaji");
   }
 
+  // Pecahkan semua penggabungan sel lama agar tidak terjadi konflik merge
+  try {
+    const oldMerged = sSlip.getRange("A1:Z50").getMergedRanges();
+    for (let i = 0; i < oldMerged.length; i++) {
+      try { oldMerged[i].breakApart(); } catch(e) {}
+    }
+  } catch(e) {
+    Logger.log("Breakapart log: " + e.toString());
+  }
+
   // Atur Lebar Kolom (A - N) Sesuai Layout Baru
   sSlip.setColumnWidth(1, 135); // A (Banner)
   sSlip.setColumnWidth(2, 20);  // B (Pemisah / Kolom Kosong)
@@ -737,31 +747,31 @@ function setupSlipGaji() {
   const GREEN_HEADER = "#00e600";
 
   // --- ROW 3: JUDUL SLIP GAJI & TANGGAL ---
-  sSlip.getRange("C3:J3").merge().setValue("SLIP GAJI BULAN OKTOBER 2026")
+  safeMerge(sSlip.getRange("C3:J3")).setValue("SLIP GAJI BULAN OKTOBER 2026")
     .setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center").setVerticalAlignment("middle")
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
   sSlip.getRange("K3").setValue("TGL.").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle")
     .setBorder(true, true, true, true, false, false);
-  sSlip.getRange("L3:N3").merge().setValue("01 Oktober 2026").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle")
+  safeMerge(sSlip.getRange("L3:N3")).setValue("01 Oktober 2026").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle")
     .setBorder(true, true, true, true, false, false);
 
   // --- ROW 5: NAMA, ALAMAT, KODE ---
   sSlip.getRange("C5").setValue("NAMA").setFontWeight("bold").setBorder(true, true, true, true, false, false);
   
   // Rumus Nama Guru (D5:G5)
-  setSafeFormula(sSlip.getRange("D5:G5").merge(), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 2; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 2; 0); "")))');
+  setSafeFormula(safeMerge(sSlip.getRange("D5:G5")), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 2; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 2; 0); "")))');
   sSlip.getRange("D5:G5").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   sSlip.getRange("H5").setValue("ALAMAT").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  setSafeFormula(sSlip.getRange("I5:K5").merge(), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 4; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 4; 0); "")))');
+  setSafeFormula(safeMerge(sSlip.getRange("I5:K5")), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 4; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 4; 0); "")))');
   sSlip.getRange("I5:K5").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   sSlip.getRange("L5").setValue("KODE").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   
   // Format sel input kode (M5:N5) warna hijau terang sesuai screenshot
   sSlip.getRange("M5:N5").setNumberFormat("@");
-  sSlip.getRange("M5:N5").merge().setValue("2").setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center")
+  safeMerge(sSlip.getRange("M5:N5")).setValue("2").setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center")
     .setBackground(GREEN_HEADER)
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
@@ -776,18 +786,18 @@ function setupSlipGaji() {
 
   // --- ROW 6: JABATAN & HP ---
   sSlip.getRange("C6").setValue("JABATAN").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  setSafeFormula(sSlip.getRange("D6:G6").merge(), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 3; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 3; 0); "")))');
+  setSafeFormula(safeMerge(sSlip.getRange("D6:G6")), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 3; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 3; 0); "")))');
   sSlip.getRange("D6:G6").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   sSlip.getRange("H6").setValue("HP").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  setSafeFormula(sSlip.getRange("I6:K6").merge(), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 5; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 5; 0); "-")))');
+  setSafeFormula(safeMerge(sSlip.getRange("I6:K6")), '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); ""; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$E; 5; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$E; 5; 0); "-")))');
   sSlip.getRange("I6:K6").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   // --- ROW 9 & 10: TABEL PENERIMAAN ---
   sSlip.getRange("C9").setValue("PENERIMAAN").setFontWeight("bold").setFontSize(11);
   sSlip.getRange("C10").setValue("NO.").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
-  sSlip.getRange("D10:J10").merge().setValue("KETERANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
-  sSlip.getRange("K10:N10").merge().setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("D10:J10")).setValue("KETERANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("K10:N10")).setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
 
   const penerimaanItems = [
     [11, "1", "GAJI POKOK", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); 0; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$N; 6; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$N; 6; 0); 0)))'],
@@ -803,23 +813,23 @@ function setupSlipGaji() {
   penerimaanItems.forEach(item => {
     const row = item[0];
     sSlip.getRange(row, 3).setValue(item[1]).setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
-    sSlip.getRange(row, 4, 1, 7).merge().setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+    safeMerge(sSlip.getRange(row, 4, 1, 7)).setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 11).setValue("Rp").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-    setSafeFormula(sSlip.getRange(row, 12, 1, 3).merge(), item[3]);
+    setSafeFormula(safeMerge(sSlip.getRange(row, 12, 1, 3)), item[3]);
     sSlip.getRange(row, 12, 1, 3).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
   });
 
   // --- ROW 20: TOTAL PENGHASILAN ---
-  sSlip.getRange("I20:J20").merge().setValue("TOTAL PENGHASILAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("I20:J20")).setValue("TOTAL PENGHASILAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   sSlip.getRange("K20").setValue("Rp").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-  setSafeFormula(sSlip.getRange("L20:N20").merge(), '=IF(SUMIF(L11:L18; ">0")=0; 0; SUMIF(L11:L18; ">0"))');
+  setSafeFormula(safeMerge(sSlip.getRange("L20:N20")), '=IF(SUMIF(L11:L18; ">0")=0; 0; SUMIF(L11:L18; ">0"))');
   sSlip.getRange("L20:N20").setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
 
   // --- ROW 21 & 22: TABEL PENGURANGAN ---
   sSlip.getRange("C21").setValue("PENGURANGAN").setFontWeight("bold").setFontSize(11);
   sSlip.getRange("C22").setValue("NO.").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
-  sSlip.getRange("D22:J22").merge().setValue("KETERANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
-  sSlip.getRange("K22:N22").merge().setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("D22:J22")).setValue("KETERANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("K22:N22")).setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
 
   const penguranganItems = [
     [23, "1", "PINJAMAN KAS YAYASAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$N; 11; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$N; 11; 0)); "-"))'],
@@ -831,26 +841,26 @@ function setupSlipGaji() {
   penguranganItems.forEach(item => {
     const row = item[0];
     sSlip.getRange(row, 3).setValue(item[1]).setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
-    sSlip.getRange(row, 4, 1, 7).merge().setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+    safeMerge(sSlip.getRange(row, 4, 1, 7)).setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 11).setValue("Rp").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-    setSafeFormula(sSlip.getRange(row, 12, 1, 3).merge(), item[3]);
+    setSafeFormula(safeMerge(sSlip.getRange(row, 12, 1, 3)), item[3]);
     sSlip.getRange(row, 12, 1, 3).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
   });
 
   // --- ROW 28: BENDAHARA & TOTAL PENGURANGAN ---
-  sSlip.getRange("C28:G28").merge().setValue("BENDAHARA YAYASAN,").setFontSize(10).setHorizontalAlignment("left");
-  sSlip.getRange("I28:J28").merge().setValue("TOTAL PENGURANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
+  safeMerge(sSlip.getRange("C28:G28")).setValue("BENDAHARA YAYASAN,").setFontSize(10).setHorizontalAlignment("left");
+  safeMerge(sSlip.getRange("I28:J28")).setValue("TOTAL PENGURANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   sSlip.getRange("K28").setValue("Rp").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-  setSafeFormula(sSlip.getRange("L28:N28").merge(), '=IF(SUMIF(L23:L26; ">0")=0; "-"; SUMIF(L23:L26; ">0"))');
+  setSafeFormula(safeMerge(sSlip.getRange("L28:N28")), '=IF(SUMIF(L23:L26; ">0")=0; "-"; SUMIF(L23:L26; ">0"))');
   sSlip.getRange("L28:N28").setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
 
   // --- ROW 30: NAMA BENDAHARA & TOTAL GAJI DITERIMA ---
-  sSlip.getRange("C30:G30").merge().setValue("NAILAH FARAFISHAH, S.S.").setFontWeight("bold").setFontSize(10).setFontLine("underline").setHorizontalAlignment("left");
-  sSlip.getRange("I30:J30").merge().setValue("TOTAL GAJI DITERIMA").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("center")
+  safeMerge(sSlip.getRange("C30:G30")).setValue("NAILAH FARAFISHAH, S.S.").setFontWeight("bold").setFontSize(10).setFontLine("underline").setHorizontalAlignment("left");
+  safeMerge(sSlip.getRange("I30:J30")).setValue("TOTAL GAJI DITERIMA").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("center")
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sSlip.getRange("K30").setValue("Rp").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("left")
     .setBorder(true, false, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  setSafeFormula(sSlip.getRange("L30:N30").merge(), '=L20 - IF(ISNUMBER(L28); L28; 0)');
+  setSafeFormula(safeMerge(sSlip.getRange("L30:N30")), '=L20 - IF(ISNUMBER(L28); L28; 0)');
   sSlip.getRange("L30:N30").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("right").setNumberFormat("#,##0")
     .setBorder(true, true, true, false, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
@@ -861,6 +871,23 @@ function setupSlipGaji() {
   sSlip.getRange("A3:A31").setBorder(true, true, true, true, false, false, "#16a34a", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
   Logger.log("✅ Slip Gaji & Master Gaji Berhasil Disesuaikan!");
+}
+
+/**
+ * Helper untuk merge sel secara aman tanpa terkena error rentang konflik
+ */
+function safeMerge(range) {
+  try {
+    const merged = range.getMergedRanges();
+    for (let i = 0; i < merged.length; i++) {
+      try { merged[i].breakApart(); } catch(e) {}
+    }
+  } catch(e) {}
+  try {
+    return range.merge();
+  } catch(e2) {
+    return range;
+  }
 }
 
 /**
