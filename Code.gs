@@ -733,6 +733,7 @@ function setupSlipGaji() {
   // Simpan data lama di Master_Gaji agar data yang sudah diisi admin tidak hilang
   const existingGaji = {};
   const existingGajiByName = {};
+  const existingGajiByNameClean = {};
   const curLastRow = sMasterGaji.getLastRow();
   const curLastCol = sMasterGaji.getLastColumn();
   if (curLastRow >= 2 && curLastCol > 0) {
@@ -740,8 +741,10 @@ function setupSlipGaji() {
     oldVals.forEach(r => {
       const k = String(r[0]).trim();
       const n = String(r[1]).trim().toLowerCase();
+      const nClean = n.replace(/[^a-z0-9]/g, "");
       if (k) existingGaji[k] = r;
       if (n) existingGajiByName[n] = r;
+      if (nClean) existingGajiByNameClean[nClean] = r;
     });
   }
 
@@ -753,9 +756,11 @@ function setupSlipGaji() {
     const formattedCode = rawCode.length === 1 ? "0" + rawCode : rawCode;
     const name = String(t[1]).trim();
     const nameLower = name.toLowerCase();
+    const cleanName = nameLower.replace(/[^a-z0-9]/g, "");
     
     let rowData = [];
-    const exist = existingGaji[formattedCode] || existingGaji[rawCode] || existingGajiByName[nameLower];
+    // Prioritaskan pencocokan berdasarkan NAMA GURU agar jabatan, alamat, TMT, dll tidak tertukar saat nomor kode diurutkan
+    const exist = existingGajiByName[nameLower] || existingGajiByNameClean[cleanName] || existingGaji[formattedCode] || existingGaji[rawCode];
     if (exist) {
       rowData = exist.slice(0, headerGaji.length);
       while (rowData.length < headerGaji.length) {
@@ -1283,6 +1288,7 @@ function sinkronkanMasterGaji() {
   // Simpan data lama di Master_Gaji agar data yang sudah diisi admin tidak hilang
   const existingGaji = {};
   const existingGajiByName = {};
+  const existingGajiByNameClean = {};
   const curLastRow = sMasterGaji.getLastRow();
   const curLastCol = sMasterGaji.getLastColumn();
   if (curLastRow >= 2 && curLastCol > 0) {
@@ -1290,8 +1296,10 @@ function sinkronkanMasterGaji() {
     oldVals.forEach(r => {
       const k = String(r[0]).trim();
       const n = String(r[1]).trim().toLowerCase();
+      const nClean = n.replace(/[^a-z0-9]/g, "");
       if (k) existingGaji[k] = r;
       if (n) existingGajiByName[n] = r;
+      if (nClean) existingGajiByNameClean[nClean] = r;
     });
   }
 
@@ -1302,9 +1310,11 @@ function sinkronkanMasterGaji() {
     const formattedCode = rawCode.length === 1 ? "0" + rawCode : rawCode;
     const name = String(t[1]).trim();
     const nameLower = name.toLowerCase();
+    const cleanName = nameLower.replace(/[^a-z0-9]/g, "");
 
     let rowData = [];
-    const exist = existingGaji[formattedCode] || existingGaji[rawCode] || existingGajiByName[nameLower];
+    // Prioritaskan pencocokan berdasarkan NAMA GURU agar jabatan, alamat, TMT, dll tidak tertukar saat nomor kode diurutkan
+    const exist = existingGajiByName[nameLower] || existingGajiByNameClean[cleanName] || existingGaji[formattedCode] || existingGaji[rawCode];
     if (exist) {
       rowData = exist.slice(0, headerGaji.length);
       while (rowData.length < headerGaji.length) {
