@@ -629,7 +629,7 @@ function initSpreadsheet() {
  * SETUP SHEET SLIP GAJI & MASTER GAJI (OTOMATIS 1 KLIK)
  * =========================================================================
  * Membuat format slip gaji siap cetak sesuai template resmi SDIT Qurratu A'yun.
- * Cukup ketik KODE Guru di sel M4, semua data & hitungan gaji langsung muncul!
+ * Menggunakan pemisah titik koma (;) sesuai standar Google Sheets regional Indonesia.
  */
 function setupSlipGaji() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -659,6 +659,9 @@ function setupSlipGaji() {
     teacherList = sMaster.getRange(2, 1, lastMasterRow - 1, 2).getValues();
   }
   
+  // Format Kolom A Master_Gaji sebagai Plain Text
+  sMasterGaji.getRange("A:A").setNumberFormat("@");
+
   // Isi data default Master Gaji untuk seluruh guru jika masih kosong
   if (sMasterGaji.getLastRow() < 2) {
     const gajiRows = [];
@@ -719,8 +722,8 @@ function setupSlipGaji() {
 
   // --- ROW 3: JUDUL SLIP GAJI & TANGGAL ---
   sSlip.getRange("B3:I3").merge().setValue("SLIP GAJI BULAN AGUSTUS 2026")
-    .setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sSlip.getRange("B3:I3").setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+    .setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center").setVerticalAlignment("middle")
+    .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
   sSlip.getRange("K3").setValue("TGL.").setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle")
     .setBorder(true, true, true, true, false, false);
@@ -729,31 +732,29 @@ function setupSlipGaji() {
 
   // --- ROW 4: NAMA, ALAMAT, KODE ---
   sSlip.getRange("B4").setValue("NAMA").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  sSlip.getRange("C4:E4").merge()
-    .setFormula('=IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$E, 2, FALSE), IFERROR(VLOOKUP(TO_TEXT($M$4), Master_Gaji!$A:$E, 2, FALSE), ""))')
-    .setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
-
-  sSlip.getRange("G4").setValue("ALAMAT").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  sSlip.getRange("H4:J4").merge()
-    .setFormula('=IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$E, 4, FALSE), "")')
-    .setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
-
+  
+  // Format sel M4 sebagai Teks agar angka '25' atau '01' cocok sempurna
+  sSlip.getRange("M4:N4").setNumberFormat("@");
   sSlip.getRange("L4").setValue("KODE").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   sSlip.getRange("M4:N4").merge().setValue("25").setFontWeight("bold").setFontSize(12).setHorizontalAlignment("center")
     .setBackground("#fef9c3") // Kuning lembut penanda input
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
+  setSafeFormula(sSlip.getRange("C4:E4").merge(), '=IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$E; 2; 0); IFERROR(VLOOKUP(TO_TEXT($M$4); Master_Gaji!$A:$E; 2; 0); ""))');
+  sSlip.getRange("C4:E4").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+
+  sSlip.getRange("G4").setValue("ALAMAT").setFontWeight("bold").setBorder(true, true, true, true, false, false);
+  setSafeFormula(sSlip.getRange("H4:J4").merge(), '=IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$E; 4; 0); "")');
+  sSlip.getRange("H4:J4").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+
   // --- ROW 5: JABATAN & HP ---
   sSlip.getRange("B5").setValue("JABATAN").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  sSlip.getRange("C5:E5").merge()
-    .setFormula('=IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$E, 3, FALSE), "")')
-    .setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+  setSafeFormula(sSlip.getRange("C5:E5").merge(), '=IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$E; 3; 0); "")');
+  sSlip.getRange("C5:E5").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   sSlip.getRange("G5").setValue("HP").setFontWeight("bold").setBorder(true, true, true, true, false, false);
-  sSlip.getRange("H4:J5").setBorder(true, true, true, true, false, false);
-  sSlip.getRange("H5:J5").merge()
-    .setFormula('=IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$E, 5, FALSE), "-")')
-    .setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
+  setSafeFormula(sSlip.getRange("H5:J5").merge(), '=IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$E; 5; 0); "-")');
+  sSlip.getRange("H5:J5").setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
 
   // --- ROW 8 & 9: TABEL PENERIMAAN ---
   sSlip.getRange("B8").setValue("PENERIMAAN").setFontWeight("bold").setFontSize(12);
@@ -762,14 +763,14 @@ function setupSlipGaji() {
   sSlip.getRange("K9:N9").merge().setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
 
   const penerimaanItems = [
-    [10, "1", "GAJI POKOK", '=IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 6, FALSE), 0)'],
-    [11, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(SUMIFS(KBM!$J:$J, KBM!$D:$D, TEXT($M$4,"00"))*12000=0, "-", SUMIFS(KBM!$J:$J, KBM!$D:$D, TEXT($M$4,"00"))*12000)'],
-    [12, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(SUMIFS(KBM!$K:$K, KBM!$D:$D, TEXT($M$4,"00"))*10000=0, "-", SUMIFS(KBM!$K:$K, KBM!$D:$D, TEXT($M$4,"00"))*10000)'],
-    [13, "4", "TUNJANGAN JABATAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 7, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 7, FALSE))'],
-    [14, "5", "TUNJANGAN WALI KELAS", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 8, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 8, FALSE))'],
-    [15, "6", "TUNJANGAN KONSUMSI + TRANSPORT", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 9, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 9, FALSE))'],
-    [16, "7", "TUNJANGAN KESEHATAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 10, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 10, FALSE))'],
-    [17, "8", "INSENTIF PELAKSANAAN UJIAN", '=IF(SUMIFS(Ujian!$H:$H, Ujian!$C:$C, TEXT($M$4,"00"))=0, "-", SUMIFS(Ujian!$H:$H, Ujian!$C:$C, TEXT($M$4,"00")))']
+    [10, "1", "GAJI POKOK", '=IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 6; 0); 0)'],
+    [11, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(SUMIFS(KBM!$J:$J; KBM!$D:$D; TEXT($M$4;"00"))*12000=0; "-"; SUMIFS(KBM!$J:$J; KBM!$D:$D; TEXT($M$4;"00"))*12000)'],
+    [12, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(SUMIFS(KBM!$K:$K; KBM!$D:$D; TEXT($M$4;"00"))*10000=0; "-"; SUMIFS(KBM!$K:$K; KBM!$D:$D; TEXT($M$4;"00"))*10000)'],
+    [13, "4", "TUNJANGAN JABATAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 7; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 7; 0))'],
+    [14, "5", "TUNJANGAN WALI KELAS", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 8; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 8; 0))'],
+    [15, "6", "TUNJANGAN KONSUMSI + TRANSPORT", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 9; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 9; 0))'],
+    [16, "7", "TUNJANGAN KESEHATAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 10; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 10; 0))'],
+    [17, "8", "INSENTIF PELAKSANAAN UJIAN", '=IF(SUMIFS(Ujian!$H:$H; Ujian!$C:$C; TEXT($M$4;"00"))=0; "-"; SUMIFS(Ujian!$H:$H; Ujian!$C:$C; TEXT($M$4;"00")))']
   ];
 
   penerimaanItems.forEach(item => {
@@ -777,13 +778,15 @@ function setupSlipGaji() {
     sSlip.getRange(row, 2).setValue(item[1]).setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 3, 1, 7).merge().setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 11).setValue("Rp").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-    sSlip.getRange(row, 12, 1, 3).merge().setFormula(item[3]).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
+    setSafeFormula(sSlip.getRange(row, 12, 1, 3).merge(), item[3]);
+    sSlip.getRange(row, 12, 1, 3).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
   });
 
   // --- ROW 20: TOTAL PENGHASILAN ---
   sSlip.getRange("H20:J20").merge().setValue("TOTAL PENGHASILAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   sSlip.getRange("K20").setValue("Rp").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-  sSlip.getRange("L20:N20").merge().setFormula('=SUMIF(L10:L17, ">0")').setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
+  setSafeFormula(sSlip.getRange("L20:N20").merge(), '=SUMIF(L10:L17; ">0")');
+  sSlip.getRange("L20:N20").setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
 
   // --- ROW 22 & 23: TABEL PENGURANGAN ---
   sSlip.getRange("B22").setValue("PENGURANGAN").setFontWeight("bold").setFontSize(12);
@@ -792,10 +795,10 @@ function setupSlipGaji() {
   sSlip.getRange("K23:N23").merge().setValue("JUMLAH").setFontWeight("bold").setHorizontalAlignment("center").setBackground(GREEN_HEADER).setBorder(true, true, true, true, false, false);
 
   const penguranganItems = [
-    [24, "1", "PINJAMAN KAS YAYASAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 11, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 11, FALSE))'],
-    [25, "2", "IURAN SPP ANAK", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 12, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 12, FALSE))'],
-    [26, "3", "DONASI", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 13, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 13, FALSE))'],
-    [27, "4", "LAINNYA", '=IF(IFERROR(VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 14, FALSE), 0)=0, "-", VLOOKUP(TEXT($M$4,"00"), Master_Gaji!$A:$N, 14, FALSE))']
+    [24, "1", "PINJAMAN KAS YAYASAN", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 11; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 11; 0))'],
+    [25, "2", "IURAN SPP ANAK", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 12; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 12; 0))'],
+    [26, "3", "DONASI", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 13; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 13; 0))'],
+    [27, "4", "LAINNYA", '=IF(IFERROR(VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 14; 0); 0)=0; "-"; VLOOKUP(TEXT($M$4;"00"); Master_Gaji!$A:$N; 14; 0))']
   ];
 
   penguranganItems.forEach(item => {
@@ -803,14 +806,16 @@ function setupSlipGaji() {
     sSlip.getRange(row, 2).setValue(item[1]).setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 3, 1, 7).merge().setValue(item[2]).setHorizontalAlignment("left").setBorder(true, true, true, true, false, false);
     sSlip.getRange(row, 11).setValue("Rp").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-    sSlip.getRange(row, 12, 1, 3).merge().setFormula(item[3]).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
+    setSafeFormula(sSlip.getRange(row, 12, 1, 3).merge(), item[3]);
+    sSlip.getRange(row, 12, 1, 3).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
   });
 
   // --- ROW 29: BENDAHARA & TOTAL PENGURANGAN ---
   sSlip.getRange("B29:F29").merge().setValue("BENDAHARA YAYASAN,").setFontSize(10).setHorizontalAlignment("left");
   sSlip.getRange("H29:J29").merge().setValue("TOTAL PENGURANGAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
   sSlip.getRange("K29").setValue("Rp").setFontWeight("bold").setHorizontalAlignment("left").setBorder(true, false, true, true, false, false);
-  sSlip.getRange("L29:N29").merge().setFormula('=IF(SUMIF(L24:L27, ">0")=0, "-", SUMIF(L24:L27, ">0"))').setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
+  setSafeFormula(sSlip.getRange("L29:N29").merge(), '=IF(SUMIF(L24:L27; ">0")=0; "-"; SUMIF(L24:L27; ">0"))');
+  sSlip.getRange("L29:N29").setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
 
   // --- ROW 31: NAMA BENDAHARA & TOTAL GAJI DITERIMA ---
   sSlip.getRange("B31:F31").merge().setValue("NAILAH FARAFISHAH, S.S.").setFontWeight("bold").setFontSize(10).setFontLine("underline").setHorizontalAlignment("left");
@@ -818,7 +823,8 @@ function setupSlipGaji() {
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sSlip.getRange("K31").setValue("Rp").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("left")
     .setBorder(true, false, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  sSlip.getRange("L31:N31").merge().setFormula('=L20 - IF(ISNUMBER(L29), L29, 0)').setFontWeight("bold").setFontSize(11).setHorizontalAlignment("right").setNumberFormat("#,##0")
+  setSafeFormula(sSlip.getRange("L31:N31").merge(), '=L20 - IF(ISNUMBER(L29); L29; 0)');
+  sSlip.getRange("L31:N31").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("right").setNumberFormat("#,##0")
     .setBorder(true, true, true, false, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
   // --- BINGKAI LUAR KOTAK CETAK SLIP GAJI (B3:N31) ---
@@ -826,7 +832,24 @@ function setupSlipGaji() {
 
   // --- BANNER DI KOLOM A ---
   sSlip.getRange("A3:A31").setBorder(true, true, true, true, false, false, "#16a34a", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  sSlip.getRange("A3").setFormula('=IMAGE("https://raw.githubusercontent.com/ibnuhusny-spec/new-sirekap/main/logo.png", 1)');
+  setSafeFormula(sSlip.getRange("A3"), '=IMAGE("https://raw.githubusercontent.com/ibnuhusny-spec/new-sirekap/main/logo.png")');
 
   Logger.log("✅ Slip Gaji & Master Gaji Berhasil Dibuat!");
+}
+
+/**
+ * Helper untuk menyetel formula secara aman sesuai regional Google Sheets
+ */
+function setSafeFormula(range, formula) {
+  try {
+    // Coba pasang dengan formula lokal (titik koma ;)
+    range.setFormulaLocal(formula);
+  } catch(e) {
+    try {
+      // Jika spreadsheet berformat US, gantikan titik koma dengan koma
+      range.setFormula(formula.replace(/;/g, ","));
+    } catch(e2) {
+      range.setFormula(formula);
+    }
+  }
 }
