@@ -1080,11 +1080,10 @@ function setSafeFormula(range, formula) {
 
 /**
  * Mengurutkan ulang (Re-number) seluruh kode guru sesuai aturan blok:
- * - GURU PUTRA : 01 s/d 20
- * - GURU PUTRI : 21 s/d 50
+ * - GURU PUTRA : 01 s/d 20 (Kepsek Radiant Fadli 01, Bahtiar 02, dst.)
+ * - GURU PUTRI : 21 s/d 50 (Dra. Mardia Habe 21, Hj. Nur Apni 22, dst.)
  * Otomatis menyinkronkan kodenya di sheet Master, Master_Gaji, KBM, dan Ujian
- * sehingga jika ada guru yang keluar atau masuk, kelompok putra dan putri
- * tidak saling menggeser serta riwayat jam mengajar lama tetap aman.
+ * sehingga riwayat presensi jam mengajar lama tetap aman dan tidak tertukar.
  */
 function urutkanUlangKodeGuru() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -1093,24 +1092,56 @@ function urutkanUlangKodeGuru() {
   if (lastRowMaster < 2) return;
 
   const masterData = sMaster.getRange(2, 1, lastRowMaster - 1, 3).getValues();
-  
-  // Daftar nama guru putri SDIT Qurratu A'yun untuk identifikasi kelompok
-  const knownPutri = [
-    "mardia habe", "nur apni", "amalia ahsan", "dewi syahara", "ina mulyati",
-    "humairah", "fitriani", "satriani", "nur wahidah", "muti'ah",
-    "liza fany", "darmawati", "ilma", "nurdiyawanti", "rahmawati basri",
-    "sri wahyuni", "ihwana", "surianti", "hajriani", "nur rizky",
-    "hebrianti", "dhea rahmiyanti"
+
+  // Daftar nama resmi Guru Putra (Ikhwan)
+  const LIST_PUTRA = [
+    "radiant fadli",
+    "bahtiar",
+    "agung setiabudi",
+    "fandhy ahmad klana",
+    "muhammad ihsan",
+    "turmisi",
+    "wahyu saputra",
+    "syamsir",
+    "ahmad prisatrialdi",
+    "syahrul ramadhan",
+    "muh. sofyan asnur",
+    "muhammad fikri haekal",
+    "munadil amri",
+    "fuad"
   ];
 
-  function isPutri(name, rawOldCode) {
+  // Daftar urutan resmi Guru Putri (Akhwat)
+  const LIST_PUTRI = [
+    "mardia habe",
+    "nur apni",
+    "amalia ahsan",
+    "dewi syahara",
+    "ina mulyati",
+    "humairah",
+    "fitriani",
+    "satriani",
+    "nur wahidah",
+    "muti'ah",
+    "liza fany",
+    "darmawati",
+    "ilma",
+    "nurdiyawanti",
+    "rahmawati basri",
+    "sri wahyuni",
+    "ihwana",
+    "surianti",
+    "hajriani",
+    "nur rizky",
+    "hebrianti",
+    "dhea rahmiyanti"
+  ];
+
+  function cekApakahPutra(name) {
     const n = name.toLowerCase().trim();
-    const oldNum = parseInt(rawOldCode, 10);
-    if (!isNaN(oldNum) && oldNum >= 21) return true;
-    for (let kp of knownPutri) {
-      if (n.indexOf(kp) !== -1) return true;
+    for (let p of LIST_PUTRA) {
+      if (n.indexOf(p) !== -1) return true;
     }
-    if (n.startsWith("dra.") || n.startsWith("hj.") || n.indexOf(" s.") !== -1) return true;
     return false;
   }
 
@@ -1125,17 +1156,39 @@ function urutkanUlangKodeGuru() {
     // Abaikan baris kosong atau guru yang sudah ditandai keluar
     if (!name || name.toLowerCase().indexOf("[keluar]") !== -1) continue;
 
-    if (isPutri(name, rawOldCode)) {
-      putriList.push({ oldCode: rawOldCode, name: name, pin: pin });
-    } else {
+    if (cekApakahPutra(name)) {
       putraList.push({ oldCode: rawOldCode, name: name, pin: pin });
+    } else {
+      putriList.push({ oldCode: rawOldCode, name: name, pin: pin });
     }
   }
+
+  // Urutkan Guru Putra sesuai urutan hierarki resmi
+  putraList.sort((a, b) => {
+    const na = a.name.toLowerCase();
+    const nb = b.name.toLowerCase();
+    let idxA = LIST_PUTRA.findIndex(p => na.indexOf(p) !== -1);
+    let idxB = LIST_PUTRA.findIndex(p => nb.indexOf(p) !== -1);
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    return idxA - idxB;
+  });
+
+  // Urutkan Guru Putri sesuai urutan resmi
+  putriList.sort((a, b) => {
+    const na = a.name.toLowerCase();
+    const nb = b.name.toLowerCase();
+    let idxA = LIST_PUTRI.findIndex(p => na.indexOf(p) !== -1);
+    let idxB = LIST_PUTRI.findIndex(p => nb.indexOf(p) !== -1);
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    return idxA - idxB;
+  });
 
   const codeMapping = {};
   const newMasterRows = [];
 
-  // 1. Urutkan Guru Putra (01 s/d 20)
+  // 1. Berikan nomor urut Putra: 01 s/d 20
   let numPutra = 1;
   putraList.forEach(p => {
     const newCode = numPutra < 10 ? "0" + numPutra : String(numPutra);
@@ -1148,7 +1201,7 @@ function urutkanUlangKodeGuru() {
     numPutra++;
   });
 
-  // 2. Urutkan Guru Putri (21 s/d 50)
+  // 2. Berikan nomor urut Putri: 21 s/d 50
   let numPutri = 21;
   putriList.forEach(p => {
     const newCode = String(numPutri);
@@ -1161,17 +1214,17 @@ function urutkanUlangKodeGuru() {
     numPutri++;
   });
 
-  // 1. Tulis ulang Sheet Master dengan kode urut baru
+  // Tulis ulang Sheet Master kolom A:C
   sMaster.getRange(2, 1, lastRowMaster - 1, 3).clearContent();
   sMaster.getRange("A:A").setNumberFormat("@");
   if (newMasterRows.length > 0) {
     sMaster.getRange(2, 1, newMasterRows.length, 3).setValues(newMasterRows);
   }
 
-  // 2. Sinkronkan riwayat di Sheet KBM agar jam mengajar tetap akurat
+  // Sinkronkan ke sheet KBM
   const sKBM = ss.getSheetByName(SHEET_KBM);
   if (sKBM && sKBM.getLastRow() >= 2) {
-    const kbmData = sKBM.getRange(2, 4, sKBM.getLastRow() - 1, 2).getValues(); // Kolom D: Kode, Kolom E: Nama
+    const kbmData = sKBM.getRange(2, 4, sKBM.getLastRow() - 1, 2).getValues();
     const newKbmCodes = [];
     for (let i = 0; i < kbmData.length; i++) {
       const rowName = String(kbmData[i][1]).trim().toLowerCase();
@@ -1181,10 +1234,10 @@ function urutkanUlangKodeGuru() {
     sKBM.getRange(2, 4, newKbmCodes.length, 1).setValues(newKbmCodes);
   }
 
-  // 3. Sinkronkan riwayat di Sheet Ujian
+  // Sinkronkan ke sheet Ujian
   const sUjian = ss.getSheetByName(SHEET_UJIAN);
   if (sUjian && sUjian.getLastRow() >= 2) {
-    const ujianData = sUjian.getRange(2, 3, sUjian.getLastRow() - 1, 2).getValues(); // Kolom C: Kode, Kolom D: Nama
+    const ujianData = sUjian.getRange(2, 3, sUjian.getLastRow() - 1, 2).getValues();
     const newUjianCodes = [];
     for (let i = 0; i < ujianData.length; i++) {
       const rowName = String(ujianData[i][1]).trim().toLowerCase();
@@ -1194,10 +1247,10 @@ function urutkanUlangKodeGuru() {
     sUjian.getRange(2, 3, newUjianCodes.length, 1).setValues(newUjianCodes);
   }
 
-  // 4. Perbarui Master_Gaji dan format Slip_Gaji secara otomatis
+  // Perbarui Master_Gaji dan format Slip_Gaji secara otomatis
   setupSlipGaji();
 
-  SpreadsheetApp.getActiveSpreadsheet().toast("Nomor kode berhasil diurutkan: Putra (01-20), Putri (21-50)!", "Sukses 🟢", 5);
+  SpreadsheetApp.getActiveSpreadsheet().toast("Susunan berhasil dirapikan: Putra (01-20), Putri (21-50)!", "Sukses 🟢", 5);
 }
 
 /**
