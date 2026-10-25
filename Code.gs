@@ -694,8 +694,6 @@ function setupSlipGaji() {
   } else {
     sSlip.clear();
   }
-  
-  sSlip.setGridlines(true);
 
   // Atur Lebar Kolom (A - N)
   sSlip.setColumnWidth(1, 130); // A (Banner)
@@ -815,7 +813,7 @@ function setupSlipGaji() {
   sSlip.getRange("L29:N29").merge().setFormula('=IF(SUMIF(L24:L27, ">0")=0, "-", SUMIF(L24:L27, ">0"))').setFontWeight("bold").setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
 
   // --- ROW 31: NAMA BENDAHARA & TOTAL GAJI DITERIMA ---
-  sSlip.getRange("B31:F31").merge().setValue("NAILAH FARAFISHAH, S.S.").setFontWeight("bold").setFontSize(10).setFontUnderline(true).setHorizontalAlignment("left");
+  sSlip.getRange("B31:F31").merge().setValue("NAILAH FARAFISHAH, S.S.").setFontWeight("bold").setFontSize(10).setFontLine("underline").setHorizontalAlignment("left");
   sSlip.getRange("H31:J31").merge().setValue("TOTAL GAJI DITERIMA").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("center")
     .setBorder(true, true, true, true, false, false, "#000000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   sSlip.getRange("K31").setValue("Rp").setFontWeight("bold").setFontSize(11).setHorizontalAlignment("left")
