@@ -393,7 +393,9 @@ function getRiwayatGuru(sheetName, guruString) {
     const rowCode = rawCode ? (rawCode.length === 1 ? "0" + rawCode : rawCode) : "";
     const rowName = String(r[isKBM ? 4 : 3]).trim().toLowerCase();
 
-    const isMatch = (targetCode && rowCode && targetCode === rowCode) || (rowName && rowName === targetName);
+    const isMatch = (targetCode && rowCode && targetCode === rowCode) || 
+                    (rowName && rowName === targetName) ||
+                    (targetName && rowName && (rowName.indexOf(targetName) !== -1 || targetName.indexOf(rowName) !== -1));
 
     if (isMatch) {
       if (isKBM) {
@@ -998,13 +1000,13 @@ function setupSlipGaji() {
 
   const penerimaanItems = [
     [11, "1", "GAJI POKOK", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); 0; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; 0; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 6; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$R; 6; 0); 0))))'],
-    [12, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0; SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J)*12000=0); "-"; SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J)*12000)'],
-    [13, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0; SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K)*10000=0); "-"; SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K)*10000)'],
+    [12, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*12000; IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*12000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*12000; "-"))))'],
+    [13, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*10000; IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*10000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*10000; "-"))))'],
     [14, "4", "TUNJANGAN JABATAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 7; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 7; 0)); "-"))'],
     [15, "5", "TUNJANGAN WALI KELAS", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 8; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 8; 0)); "-")))'],
     [16, "6", "TUNJANGAN KONSUMSI + TRANSPORT", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 9; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 9; 0)); "-")))'],
     [17, "7", "TUNJANGAN KESEHATAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 10; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 10; 0)); "-")))'],
-    [18, "8", "INSENTIF PELAKSANAAN UJIAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0; SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H)=0); "-"; SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H))']
+    [18, "8", "INSENTIF PELAKSANAAN UJIAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H))>0; (SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H)); IF(SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H); IF(SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H); "-"))))']
   ];
 
   penerimaanItems.forEach(item => {
@@ -1255,34 +1257,12 @@ function urutkanUlangKodeGuru() {
     sMaster.getRange(2, 1, newMasterRows.length, 3).setValues(newMasterRows);
   }
 
-  // Sinkronkan ke sheet KBM
-  const sKBM = ss.getSheetByName(SHEET_KBM);
-  if (sKBM && sKBM.getLastRow() >= 2) {
-    const kbmData = sKBM.getRange(2, 4, sKBM.getLastRow() - 1, 2).getValues();
-    const newKbmCodes = [];
-    for (let i = 0; i < kbmData.length; i++) {
-      const rowName = String(kbmData[i][1]).trim().toLowerCase();
-      const updatedCode = codeMapping[rowName] || kbmData[i][0];
-      newKbmCodes.push([updatedCode]);
-    }
-    sKBM.getRange(2, 4, newKbmCodes.length, 1).setValues(newKbmCodes);
-  }
+  // Sinkronkan ke sheet KBM dan Ujian via fungsi sinkronisasi cerdas
+  sinkronkanSheetKBM(ss, newMasterRows, codeMapping);
+  sinkronkanSheetUjian(ss, newMasterRows, codeMapping);
 
-  // Sinkronkan ke sheet Ujian
-  const sUjian = ss.getSheetByName(SHEET_UJIAN);
-  if (sUjian && sUjian.getLastRow() >= 2) {
-    const ujianData = sUjian.getRange(2, 3, sUjian.getLastRow() - 1, 2).getValues();
-    const newUjianCodes = [];
-    for (let i = 0; i < ujianData.length; i++) {
-      const rowName = String(ujianData[i][1]).trim().toLowerCase();
-      const updatedCode = codeMapping[rowName] || ujianData[i][0];
-      newUjianCodes.push([updatedCode]);
-    }
-    sUjian.getRange(2, 3, newUjianCodes.length, 1).setValues(newUjianCodes);
-  }
-
-  // Perbarui Master_Gaji saja tanpa menyentuh tampilan Slip_Gaji yang sudah dirapikan user
-  sinkronkanMasterGaji();
+  // Perbarui Master_Gaji dan suntikkan formula aman ke Slip_Gaji
+  sinkronkanMasterGaji(codeMapping);
 
   SpreadsheetApp.getActiveSpreadsheet().toast("Susunan berhasil dirapikan: Putra (01-20), Putri (21-50)!", "Sukses 🟢", 5);
 }
@@ -1291,7 +1271,7 @@ function urutkanUlangKodeGuru() {
  * Menyinkronkan data guru ke Master_Gaji TANPA menyentuh/mengubah sheet Slip_Gaji
  * sehingga format dan kerapian lembar cetak slip gaji yang diatur pengguna tidak pernah rusak/tertimpa.
  */
-function sinkronkanMasterGaji() {
+function sinkronkanMasterGaji(codeMapping) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sMasterGaji = ss.getSheetByName("Master_Gaji");
   if (!sMasterGaji) return;
@@ -1436,6 +1416,217 @@ function sinkronkanMasterGaji() {
       sMasterGaji.getRange(2, 16, gajiRows.length, 2).setDataValidation(ruleYaTidak);
     } catch(e) {}
   }
+
+  // Sinkronkan sheet Ujian dan KBM secara otomatis
+  sinkronkanSheetUjian(ss, teacherList, codeMapping);
+  sinkronkanSheetKBM(ss, teacherList, codeMapping);
+
+  // Perbarui formula penting di Slip_Gaji secara aman TANPA merusak layout / format cetak yang sudah dirapikan pengguna
+  const sSlip = ss.getSheetByName("Slip_Gaji");
+  if (sSlip) {
+    const fKBM1 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*12000; IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*12000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*12000; "-"))))';
+    const fKBM2 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*10000; IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*10000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*10000; "-"))))';
+    const fUjian = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H))>0; (SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H)); IF(SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H); IF(SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H); "-"))))';
+
+    setSafeFormula(sSlip.getRange("L12"), fKBM1);
+    setSafeFormula(sSlip.getRange("L13"), fKBM2);
+    setSafeFormula(sSlip.getRange("L18"), fUjian);
+    setSafeFormula(sSlip.getRange("L20"), '=IF(SUMIF(L11:L18; ">0")=0; 0; SUMIF(L11:L18; ">0"))');
+    setSafeFormula(sSlip.getRange("L28"), '=IF(SUMIF(L23:L26; ">0")=0; "-"; SUMIF(L23:L26; ">0"))');
+    setSafeFormula(sSlip.getRange("L30"), '=L20 - IF(ISNUMBER(L28); L28; 0)');
+  }
+}
+
+/**
+ * Menyelaraskan sheet Ujian:
+ * - Memastikan seluruh kode guru di kolom C menggunakan format teks 2 digit ('01', '02', '21')
+ * - Mencocokkan nama guru dengan Master menggunakan normalisasi cerdas
+ * - Membersihkan kolom Nominal (H) menjadi angka murni agar dapat dijumlahkan oleh SUMIF
+ * - Jika nominal masih kosong/0, otomatis menghitung nominal berdasarkan kategori & volume
+ */
+function sinkronkanSheetUjian(ss, teacherList, codeMapping) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sUjian = ss.getSheetByName(SHEET_UJIAN);
+  if (!sUjian || sUjian.getLastRow() < 2) return;
+
+  if (!teacherList || teacherList.length === 0) {
+    const sMaster = ss.getSheetByName(SHEET_MASTER);
+    if (sMaster && sMaster.getLastRow() >= 2) {
+      teacherList = sMaster.getRange(2, 1, sMaster.getLastRow() - 1, 2).getValues();
+    } else {
+      teacherList = [];
+    }
+  }
+
+  const teacherLookup = [];
+  teacherList.forEach(t => {
+    const rawC = String(t[0]).trim();
+    const formattedC = rawC ? (rawC.length === 1 ? "0" + rawC : rawC) : "";
+    const name = String(t[1]).trim();
+    if (name) {
+      teacherLookup.push({
+        code: formattedC,
+        name: name,
+        norm: normalizeTeacherName(name)
+      });
+    }
+  });
+
+  const lastRow = sUjian.getLastRow();
+  const numRows = lastRow - 1;
+  const numCols = Math.max(sUjian.getLastColumn(), 8);
+  const ujianData = sUjian.getRange(2, 1, numRows, numCols).getValues();
+
+  const newCodes = [];
+  const newNames = [];
+  const newNominals = [];
+
+  for (let i = 0; i < ujianData.length; i++) {
+    const row = ujianData[i];
+    const rawCode = String(row[2] || "").trim();
+    const formattedCode = rawCode ? (rawCode.length === 1 ? "0" + rawCode : rawCode) : "";
+    const rawName = String(row[3] || "").trim();
+    const normName = normalizeTeacherName(rawName);
+
+    let matchedCode = "";
+    let matchedName = rawName;
+
+    if (normName) {
+      const match = teacherLookup.find(t => t.norm === normName || t.norm.indexOf(normName) !== -1 || normName.indexOf(t.norm) !== -1);
+      if (match) {
+        matchedCode = match.code;
+        matchedName = match.name;
+      }
+    }
+
+    if (!matchedCode && formattedCode) {
+      if (codeMapping && codeMapping["old_" + formattedCode]) {
+        matchedCode = codeMapping["old_" + formattedCode];
+      } else {
+        const matchC = teacherLookup.find(t => t.code === formattedCode);
+        if (matchC) {
+          matchedCode = matchC.code;
+          if (!matchedName) matchedName = matchC.name;
+        } else {
+          matchedCode = formattedCode;
+        }
+      }
+    }
+
+    newCodes.push([matchedCode || formattedCode]);
+    newNames.push([matchedName]);
+
+    let rawNom = row[7];
+    let nomNum = 0;
+    if (typeof rawNom === "string") {
+      const digits = rawNom.replace(/[^0-9]/g, "");
+      nomNum = digits ? Number(digits) : 0;
+    } else {
+      nomNum = Number(rawNom) || 0;
+    }
+
+    if (nomNum === 0 && row[4]) {
+      nomNum = hitungNominalUjian(row[4], row[6] || 1, matchedCode, matchedName);
+    }
+
+    newNominals.push([nomNum]);
+  }
+
+  sUjian.getRange("C:C").setNumberFormat("@");
+  sUjian.getRange(2, 3, numRows, 1).setValues(newCodes);
+  sUjian.getRange(2, 4, numRows, 1).setValues(newNames);
+  sUjian.getRange(2, 8, numRows, 1).setValues(newNominals);
+  sUjian.getRange(2, 8, numRows, 1).setNumberFormat("#,##0");
+}
+
+/**
+ * Menyelaraskan sheet KBM:
+ * - Memastikan seluruh kode guru di kolom D menggunakan format teks 2 digit ('01', '02', '21')
+ * - Mencocokkan nama guru dengan Master
+ * - Memastikan Jam Sendiri (J) dan Jam Team (K) adalah angka murni
+ */
+function sinkronkanSheetKBM(ss, teacherList, codeMapping) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sKBM = ss.getSheetByName(SHEET_KBM);
+  if (!sKBM || sKBM.getLastRow() < 2) return;
+
+  if (!teacherList || teacherList.length === 0) {
+    const sMaster = ss.getSheetByName(SHEET_MASTER);
+    if (sMaster && sMaster.getLastRow() >= 2) {
+      teacherList = sMaster.getRange(2, 1, sMaster.getLastRow() - 1, 2).getValues();
+    } else {
+      teacherList = [];
+    }
+  }
+
+  const teacherLookup = [];
+  teacherList.forEach(t => {
+    const rawC = String(t[0]).trim();
+    const formattedC = rawC ? (rawC.length === 1 ? "0" + rawC : rawC) : "";
+    const name = String(t[1]).trim();
+    if (name) {
+      teacherLookup.push({
+        code: formattedC,
+        name: name,
+        norm: normalizeTeacherName(name)
+      });
+    }
+  });
+
+  const lastRow = sKBM.getLastRow();
+  const numRows = lastRow - 1;
+  const numCols = Math.max(sKBM.getLastColumn(), 11);
+  const kbmData = sKBM.getRange(2, 1, numRows, numCols).getValues();
+
+  const newCodes = [];
+  const newNames = [];
+  const newHours = [];
+
+  for (let i = 0; i < kbmData.length; i++) {
+    const row = kbmData[i];
+    const rawCode = String(row[3] || "").trim();
+    const formattedCode = rawCode ? (rawCode.length === 1 ? "0" + rawCode : rawCode) : "";
+    const rawName = String(row[4] || "").trim();
+    const normName = normalizeTeacherName(rawName);
+
+    let matchedCode = "";
+    let matchedName = rawName;
+
+    if (normName) {
+      const match = teacherLookup.find(t => t.norm === normName || t.norm.indexOf(normName) !== -1 || normName.indexOf(t.norm) !== -1);
+      if (match) {
+        matchedCode = match.code;
+        matchedName = match.name;
+      }
+    }
+
+    if (!matchedCode && formattedCode) {
+      if (codeMapping && codeMapping["old_" + formattedCode]) {
+        matchedCode = codeMapping["old_" + formattedCode];
+      } else {
+        const matchC = teacherLookup.find(t => t.code === formattedCode);
+        if (matchC) {
+          matchedCode = matchC.code;
+          if (!matchedName) matchedName = matchC.name;
+        } else {
+          matchedCode = formattedCode;
+        }
+      }
+    }
+
+    newCodes.push([matchedCode || formattedCode]);
+    newNames.push([matchedName]);
+
+    const jamSendiri = Number(row[9]) || 0;
+    const jamTeam = Number(row[10]) || 0;
+    newHours.push([jamSendiri, jamTeam]);
+  }
+
+  sKBM.getRange("D:D").setNumberFormat("@");
+  sKBM.getRange(2, 4, numRows, 1).setValues(newCodes);
+  sKBM.getRange(2, 5, numRows, 1).setValues(newNames);
+  sKBM.getRange(2, 10, numRows, 2).setValues(newHours);
+  sKBM.getRange(2, 10, numRows, 2).setNumberFormat("#,##0");
 }
 
 /**
@@ -1492,6 +1683,9 @@ function tarikKehadiranPresensi() {
       updatedCount++;
     }
   }
+
+  // Perbarui rumus dan sinkronkan Ujian & KBM otomatis
+  sinkronkanMasterGaji();
 
   SpreadsheetApp.getActiveSpreadsheet().toast(
     "Berhasil memperbarui kehadiran " + updatedCount + " guru dari Sheet Presensi! Tunjangan transport otomatis terhitung di Kolom I.",
@@ -1606,8 +1800,9 @@ function cariKehadiranGuru(targetName, attendanceMap) {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("📋 SiRekap")
-    .addItem("🖨️ Buat / Perbarui Slip Gaji", "setupSlipGaji")
+    .addItem("🖨️ Inisialisasi Ulang Desain Slip Gaji (Reset Layout)", "setupSlipGaji")
     .addItem("🔢 Urutkan Ulang Nomor Kode Guru (Otomatis)", "urutkanUlangKodeGuru")
     .addItem("📥 Tarik Kehadiran dari Sheet Presensi", "tarikKehadiranPresensi")
+    .addItem("🔄 Perbarui Rumus Slip Gaji & Sinkronkan Ujian", "sinkronkanMasterGaji")
     .addToUi();
 }

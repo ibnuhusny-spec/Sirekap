@@ -596,7 +596,7 @@
             container.innerHTML = html;
         }
 
-        function extractCodeName(str) { str = String(str).trim(); const match = str.match(/^(\d+)[\.\-\s]+(.*)/); return match ? { code: match[1], name: match[2].trim() } : { code: '', name: str }; }
+        function extractCodeName(str) { str = String(str).trim(); const match = str.match(/^(\d+)[\.\-\s]+(.*)/); return match ? { code: (match[1].length === 1 ? "0" + match[1] : match[1]), name: match[2].trim() } : { code: '', name: str }; }
 
         function submitUjian(e) {
             e.preventDefault(); const btn=e.target.querySelector('button[type="submit"]');
