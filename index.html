@@ -296,6 +296,9 @@
 
                 <form id="form-ujian" class="hidden" onsubmit="submitUjian(event)">
                     <input type="hidden" id="edit_id_ujian">
+                    <div class="form-row">
+                        <div class="form-group"><label>Tanggal Kegiatan Ujian</label><input type="date" id="date_ujian" required></div>
+                    </div>
                     <div class="form-group">
                         <label>Nama Anda</label>
                         <input type="text" id="guru_ujian" placeholder="Memuat nama..." autocomplete="off">
@@ -396,6 +399,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('date').valueAsDate = new Date();
+            if (document.getElementById('date_ujian')) document.getElementById('date_ujian').valueAsDate = new Date();
             const now = new Date();
             document.getElementById('time').value = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
             const savedM = localStorage.getItem('sirekap_master');
@@ -583,7 +587,20 @@
             document.getElementById('splash-screen').style.display = 'flex'; 
         }
 
-        function switchTab(tab) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); if(tab === 'harian') { document.getElementById('form-harian').classList.remove('hidden'); document.getElementById('form-ujian').classList.add('hidden'); } else { document.getElementById('form-harian').classList.add('hidden'); document.getElementById('form-ujian').classList.remove('hidden'); } }
+        function switchTab(tab) { 
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                const isMatch = (tab === 'harian' && b.textContent.includes('Harian')) || 
+                                (tab === 'ujian' && b.textContent.includes('Ujian'));
+                b.classList.toggle('active', isMatch);
+            }); 
+            if(tab === 'harian') { 
+                document.getElementById('form-harian').classList.remove('hidden'); 
+                document.getElementById('form-ujian').classList.add('hidden'); 
+            } else { 
+                document.getElementById('form-harian').classList.add('hidden'); 
+                document.getElementById('form-ujian').classList.remove('hidden'); 
+            } 
+        }
 
         function renderUjian() {
             const cat = document.getElementById('cat_ujian').value;
@@ -609,7 +626,8 @@
             let d=[]; if(document.getElementById('mapel_ujian'))d.push(document.getElementById('mapel_ujian').value); if(document.getElementById('kelas_ujian'))d.push(document.getElementById('kelas_ujian').value);
             if(!guru) return alert("Nama Guru tidak boleh kosong!");
             const gn = extractCodeName(guru);
-            const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal:document.getElementById('date').value, KodeGuru: gn.code, NamaGuru: gn.name, Guru: guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
+            const tgl = (document.getElementById('date_ujian') && document.getElementById('date_ujian').value) ? document.getElementById('date_ujian').value : document.getElementById('date').value;
+            const payload = { action: action, type: 'ujian', ID: editId || Date.now(), Tanggal: tgl, KodeGuru: gn.code, NamaGuru: gn.name, Guru: guru, Kategori:cat.toUpperCase(), Rincian:d.join(', '), Volume:vol, Nominal:0 };
             sendData(payload, btn, 'ujian');
         }
 
@@ -641,11 +659,26 @@
                     if(p.action === 'update') cancelEdit(type);
                     else {
                         if(type==='harian'){ document.getElementById('mapel').value=''; document.getElementById('kelas').value=''; document.getElementById('isSubstitute').checked=false; }
-                        else { if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; document.getElementById('vol_u').value=''; document.getElementById('cat_ujian').value=''; document.getElementById('ujian-inputs').innerHTML=''; }
+                        else { 
+                            if(document.getElementById('mapel_ujian'))document.getElementById('mapel_ujian').value=''; 
+                            if(document.getElementById('kelas_ujian'))document.getElementById('kelas_ujian').value=''; 
+                            if(document.getElementById('vol_u'))document.getElementById('vol_u').value=''; 
+                            document.getElementById('cat_ujian').value=''; 
+                            document.getElementById('ujian-inputs').innerHTML=''; 
+                        }
                     }
                     fetchMyHistory();
                 } else alert("Gagal: " + d.message);
-            }).catch(()=>alert("Error koneksi.")).finally(()=>{ btn.disabled=false; btn.textContent= type === 'ujian' ? "Simpan Data Ujian" : "Kirim Laporan KBM"; });
+            }).catch(()=>alert("Error koneksi.")).finally(()=>{ 
+                btn.disabled=false; 
+                if (type === 'ujian') {
+                    const editId = document.getElementById('edit_id_ujian').value;
+                    btn.textContent = editId ? "Update Data Ujian" : "Kirim Laporan Ujian";
+                } else {
+                    const editId = document.getElementById('edit_id_harian').value;
+                    btn.textContent = editId ? "Update Data KBM" : "Kirim Laporan KBM";
+                }
+            });
         }
 
         function filterList(listId, inputId) {
@@ -848,13 +881,17 @@
             const secureQuery = "&guru=" + encodeURIComponent(guruName) + "&pin=" + encodeURIComponent(guruPin);
 
             Promise.all([
-                fetch(API_URL+"?action=read&type=harian" + secureQuery).then(r=>r.json()),
-                fetch(API_URL+"?action=read&type=ujian" + secureQuery).then(r=>r.json())
+                fetch(API_URL+"?action=read&type=harian" + secureQuery).then(r=>r.json()).catch(()=>({result:'error'})),
+                fetch(API_URL+"?action=read_ujian&type=ujian" + secureQuery).then(r=>r.json()).catch(()=>({result:'error'}))
             ]).then(([harian, ujian]) => {
                 let cloudData = [];
                 
-                if(harian.result === 'success' && harian.data) harian.data.forEach(d => { cloudData.push({...d, type:'harian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
-                if(ujian.result === 'success' && ujian.data) ujian.data.forEach(d => { cloudData.push({...d, type:'ujian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                if(harian && harian.result === 'success' && harian.data) {
+                    harian.data.forEach(d => { cloudData.push({...d, type:'harian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                }
+                if(ujian && ujian.result === 'success' && ujian.data) {
+                    ujian.data.forEach(d => { cloudData.push({...d, type:'ujian', Guru: (d.Kode?d.Kode+' ':'')+d.Nama}); });
+                }
                 
                 myHistoryData = cloudData;
                 localStorage.setItem('sirekap_local_history', JSON.stringify(myHistoryData.slice(0,50)));
@@ -863,7 +900,7 @@
                 renderHistory();
                 
                 // Menampilkan kembali Total Jam Mengajar Langsung dari Server
-                if (harian.stats) {
+                if (harian && harian.stats) {
                     document.getElementById('stat-sendiri').textContent = harian.stats.sendiri + " JP"; 
                     document.getElementById('stat-team').textContent = harian.stats.team + " JP";
                     const container = document.getElementById('guru-stats-harian');
@@ -872,19 +909,23 @@
                 } else {
                     calcStats(); // Cadangan
                 }
-            }).catch(e => console.log("History fetch error"));
+            }).catch(e => console.log("History fetch error", e));
         }
+
         function renderHistory() {
             const list = document.getElementById('history-list'); list.innerHTML = '';
-            myHistoryData.sort((a,b) => b.ID - a.ID);
+            myHistoryData.sort((a,b) => Number(b.ID) - Number(a.ID));
             if(myHistoryData.length === 0) { list.innerHTML = '<p style="font-size:0.8rem; color:#94a3b8; font-style:italic; text-align:center;">Tidak ada riwayat.</p>'; return; }
             myHistoryData.forEach(item => {
                 const isHarian = item.type === 'harian';
-                const desc = isHarian ? `${escapeHTML(item.Mapel)} (${escapeHTML(item.Kelas)})` : `${escapeHTML(item.Kategori)} - ${escapeHTML(item.Rincian)}`;
-                const val = isHarian ? `${escapeHTML(item['Jam Sendiri'] || item['Jam Team'])} JP` : `Vol: ${escapeHTML(item.Volume)}`;
+                const desc = isHarian ? `${escapeHTML(item.Mapel)} (${escapeHTML(item.Kelas)})` : `${escapeHTML(item.Kategori)} ${item.Rincian ? '- ' + escapeHTML(item.Rincian) : ''}`;
+                const val = isHarian 
+                    ? `${escapeHTML(item['Jam Sendiri'] || item['Jam Team'])} JP` 
+                    : `Vol: ${escapeHTML(item.Volume)} ${item.Nominal > 0 ? '• ' + formatRupiah(item.Nominal) : ''}`;
                 const badgeColor = isHarian ? '#e0f2fe' : '#dcfce7';
+                const badgeTextColor = isHarian ? '#0369a1' : '#15803d';
                 const div = document.createElement('div'); div.className = 'history-item';
-                div.innerHTML = `<div><span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; padding:2px 6px; border-radius:4px;">${isHarian?'KBM':'UJIAN'}</span><span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${escapeHTML(item.Tanggal)}</span><div style="font-weight:600; font-size:0.9rem;">${desc}</div><div style="font-size:0.8rem; color:#64748b;">${val}</div></div><div class="history-actions"><button class="btn-icon btn-edit-item click-sound" onclick="editEntry('${item.ID}')">✏️</button><button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}','${item.type}')">🗑️</button></div>`;
+                div.innerHTML = `<div><span style="font-weight:bold; font-size:0.8rem; background:${badgeColor}; color:${badgeTextColor}; padding:2px 6px; border-radius:4px;">${isHarian?'KBM':'UJIAN'}</span><span style="font-size:0.8rem; color:#64748b; margin-left:5px;">${escapeHTML(item.Tanggal)}</span><div style="font-weight:600; font-size:0.9rem;">${desc}</div><div style="font-size:0.8rem; color:#64748b;">${val}</div></div><div class="history-actions"><button class="btn-icon btn-edit-item click-sound" onclick="editEntry('${item.ID}')" title="Edit">✏️</button><button class="btn-icon btn-del-item click-sound" onclick="deleteEntry('${item.ID}','${item.type}')" title="Hapus">🗑️</button></div>`;
                 list.appendChild(div);
             });
         }
@@ -913,13 +954,24 @@
                 document.getElementById('form-harian').scrollIntoView({behavior:'smooth'});
             } else {
                 document.getElementById('edit_id_ujian').value = item.ID;
+                if (document.getElementById('date_ujian')) document.getElementById('date_ujian').value = item.Tanggal;
                 const catSelect = document.getElementById('cat_ujian');
-                const catVal = item.Kategori ? item.Kategori.toLowerCase() : '';
-                for(let i=0; i<catSelect.options.length; i++){ if(catSelect.options[i].value === catVal) catSelect.selectedIndex = i; }
+                const rawCat = (item.Kategori || '').toLowerCase().replace(/[\s\-]+/g, '_');
+                for(let i=0; i<catSelect.options.length; i++){ 
+                    const optVal = catSelect.options[i].value;
+                    if(optVal && (optVal === rawCat || rawCat.indexOf(optVal) !== -1 || optVal.indexOf(rawCat) !== -1)) {
+                        catSelect.selectedIndex = i; 
+                        break;
+                    }
+                }
                 renderUjian();
                 const parts = item.Rincian ? item.Rincian.split(', ') : [];
-                if(document.getElementById('mapel_ujian') && parts[0]) document.getElementById('mapel_ujian').value = parts[0];
-                if(document.getElementById('kelas_ujian') && parts[1]) document.getElementById('kelas_ujian').value = parts[1];
+                if (document.getElementById('mapel_ujian') && document.getElementById('kelas_ujian')) {
+                    if (parts[0]) document.getElementById('mapel_ujian').value = parts[0];
+                    if (parts[1]) document.getElementById('kelas_ujian').value = parts[1];
+                } else if (document.getElementById('kelas_ujian')) {
+                    if (parts[0]) document.getElementById('kelas_ujian').value = parts[0];
+                }
                 if(document.getElementById('vol_u')) document.getElementById('vol_u').value = item.Volume;
                 document.getElementById('btn-submit-ujian').textContent = "Update Data Ujian";
                 document.getElementById('btn-submit-ujian').classList.replace('btn-success', 'btn-warning');
@@ -955,6 +1007,8 @@
                 document.getElementById('btn-submit-ujian').classList.replace('btn-warning', 'btn-success');
                 document.getElementById('btn-cancel-ujian').classList.add('hidden');
                 document.getElementById('ujian-inputs').innerHTML = '';
+                document.getElementById('cat_ujian').value = '';
+                if (document.getElementById('date_ujian')) document.getElementById('date_ujian').valueAsDate = new Date();
             }
         }
         

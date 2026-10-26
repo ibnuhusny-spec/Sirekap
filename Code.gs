@@ -31,27 +31,35 @@ function doGet(e) {
       return responseJSON(getMasterData());
     }
 
-    // 2. Baca Data KBM (Harian)
+    // 2. Baca Data KBM (Harian) & Ujian
     if (action === "read") {
       // Jika diakses oleh Guru (Riwayat Pribadi & Akumulasi JP)
-      if (type === "harian" && guru && pin) {
+      if (guru && pin) {
         if (!validasiGuru(guru, pin)) {
           return responseJSON({ result: "error", message: "Akses Ditolak. PIN Keamanan salah." });
         }
-        return responseJSON(getRiwayatGuru(SHEET_KBM, guru));
+        if (type === "ujian") {
+          return responseJSON(getRiwayatGuru(SHEET_UJIAN, guru));
+        } else {
+          return responseJSON(getRiwayatGuru(SHEET_KBM, guru));
+        }
       }
 
-      // Jika diakses oleh Admin / Kepala Sekolah (Dashboard KBM)
+      // Jika diakses oleh Admin / Kepala Sekolah (Dashboard KBM atau Ujian)
       if (validasiAdmin(adminPass)) {
-        return responseJSON(getAllDataKBM());
+        if (type === "ujian") {
+          return responseJSON(getAllDataUjian());
+        } else {
+          return responseJSON(getAllDataKBM());
+        }
       }
       return responseJSON({ result: "error", message: "Akses Ditolak. Password Admin salah." });
     }
 
-    // 3. Baca Data Ujian
+    // 3. Baca Data Ujian (Dukungan endpoint terpisah read_ujian)
     if (action === "read_ujian") {
       // Jika diakses oleh Guru
-      if (type === "ujian" && guru && pin) {
+      if (guru && pin) {
         if (!validasiGuru(guru, pin)) {
           return responseJSON({ result: "error", message: "Akses Ditolak. PIN Keamanan salah." });
         }
@@ -389,6 +397,7 @@ function getRiwayatGuru(sheetName, guruString) {
   const match = String(guruString).trim().match(/^(\d+)[\.\-\s]+(.*)/);
   const targetCode = match ? (match[1].length === 1 ? "0" + match[1] : match[1]) : "";
   const targetName = (match ? match[2] : guruString).trim().toLowerCase();
+  const normTarget = normalizeTeacherName(targetName);
 
   const isKBM = (sheetName === SHEET_KBM);
   const numCols = isKBM ? 11 : 8;
@@ -403,10 +412,12 @@ function getRiwayatGuru(sheetName, guruString) {
     const rawCode = String(r[isKBM ? 3 : 2]).trim();
     const rowCode = rawCode ? (rawCode.length === 1 ? "0" + rawCode : rawCode) : "";
     const rowName = String(r[isKBM ? 4 : 3]).trim().toLowerCase();
+    const normRow = normalizeTeacherName(rowName);
 
     const isMatch = (targetCode && rowCode && targetCode === rowCode) || 
                     (rowName && rowName === targetName) ||
-                    (targetName && rowName && (rowName.indexOf(targetName) !== -1 || targetName.indexOf(rowName) !== -1));
+                    (targetName && rowName && (rowName.indexOf(targetName) !== -1 || targetName.indexOf(rowName) !== -1)) ||
+                    (normTarget && normRow && (normRow === normTarget || normRow.indexOf(normTarget) !== -1 || normTarget.indexOf(normRow) !== -1));
 
     if (isMatch) {
       if (isKBM) {
@@ -797,10 +808,11 @@ function updateData(p) {
   const isKBM = (p.type === "harian");
   const sheet = getSheet(isKBM ? SHEET_KBM : SHEET_UJIAN);
   const data = sheet.getDataRange().getValues();
-  const targetId = String(p.ID);
+  const targetId = String(p.ID).trim();
 
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === targetId) {
+    const rowId = String(data[i][0]).trim();
+    if (rowId === targetId || (Number(rowId) > 0 && Number(rowId) === Number(targetId))) {
       const row = i + 1;
       if (isKBM) {
         sheet.getRange(row, 2, 1, 10).setValues([[
@@ -843,10 +855,11 @@ function deleteData(p) {
   const isKBM = (p.type === "harian");
   const sheet = getSheet(isKBM ? SHEET_KBM : SHEET_UJIAN);
   const data = sheet.getDataRange().getValues();
-  const targetId = String(p.ID);
+  const targetId = String(p.ID).trim();
 
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === targetId) {
+    const rowId = String(data[i][0]).trim();
+    if (rowId === targetId || (Number(rowId) > 0 && Number(rowId) === Number(targetId))) {
       sheet.deleteRow(i + 1);
       return { result: "success", message: "Data berhasil dihapus." };
     }
