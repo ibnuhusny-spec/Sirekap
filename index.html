@@ -305,11 +305,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 14px;
+            gap: 6px;
+            padding: 12px 6px;
             border-radius: 14px;
             cursor: pointer;
             font-weight: 700;
+            font-size: 0.9rem;
+            white-space: nowrap;
             color: #94a3b8;
             background: rgba(15, 23, 42, 0.6);
             border: 1.5px solid rgba(148, 163, 184, 0.2);
@@ -647,9 +649,101 @@
 
         .hidden { display: none !important; }
 
+        /* FLOATING BOTTOM NAVIGATION BAR (DOCK STYLE) */
+        .bottom-nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 600px;
+            height: calc(62px + env(safe-area-inset-bottom, 0px));
+            padding: 0 12px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+        }
+        .bottom-nav-item {
+            flex: 1;
+            max-width: 76px;
+            height: 48px;
+            background: transparent;
+            border: none;
+            border-radius: 14px;
+            color: #94a3b8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav-item .bnav-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .bottom-nav-item .bnav-dot {
+            width: 5px;
+            height: 5px;
+            background: #34d399;
+            border-radius: 50%;
+            margin-top: 3px;
+            opacity: 0;
+            transform: scale(0);
+            box-shadow: 0 0 8px #34d399;
+            transition: all 0.2s ease;
+        }
+        .bottom-nav-item.active {
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.15);
+        }
+        .bottom-nav-item.active .bnav-icon {
+            transform: scale(1.15);
+        }
+        .bottom-nav-item.active .bnav-dot {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* RESPONSIVE KHUSUS LAYAR HP (MOBILE OPTIMIZATION) */
         @media (max-width: 600px) {
+            body { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+            header { padding: 0.65rem 0.8rem; }
+            .brand-wrapper { gap: 8px; }
+            .brand-logo { width: 32px; height: 32px; font-size: 1rem; border-radius: 10px; }
+            .brand-title { font-size: 1.1rem; }
+            .brand-sub { display: none; }
+            
+            /* Header User Pill & Logout agar pas dan tidak terpotong */
+            .user-pill { padding: 4px 8px; gap: 5px; max-width: 140px; }
+            .user-avatar-icon { font-size: 0.95rem; }
+            .user-role-label { display: none; }
+            .user-name-label { max-width: 85px; font-size: 0.75rem; }
+            .nav-btn.logout { padding: 6px 10px; font-size: 0.75rem; white-space: nowrap; flex-shrink: 0; }
+            
+            .container { padding: 0 0.75rem; margin: 1rem auto; }
+            .card { padding: 1.25rem 1rem; border-radius: 20px; }
             .form-row { grid-template-columns: 1fr; gap: 0; }
             .dialogue-card { padding: 1.5rem 1.2rem; }
+            
+            /* Tab di atas form disembunyikan di HP karena sudah ada di Bottom Nav */
+            .tab-container { display: none; }
+            .dash-top-actions { display: none; }
+            
+            /* Tab Master diatur rapi berbaris 4 kolom di HP tanpa patah kata */
+            .master-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+            .master-tabs .nav-btn { padding: 8px 2px; font-size: 0.75rem; justify-content: center; text-align: center; white-space: nowrap; }
         }
     </style>
 </head>
@@ -807,18 +901,17 @@
                 </div>
             </div>
             <div>
-                <!-- Admin Nav -->
-                <div id="admin-nav" class="hidden" style="display:flex; gap:8px;">
-                    <button class="nav-btn click-sound" onclick="switchView('dashboard')">📊 Dashboard</button>
-                    <button class="nav-btn click-sound" onclick="switchView('master')">🗂️ Master</button>
-                    <button class="nav-btn logout click-sound" onclick="logout()">🚪 Keluar</button>
+                <!-- Admin Nav (Compact) -->
+                <div id="admin-nav" class="hidden" style="display:flex; align-items:center; gap:8px;">
+                    <span class="user-pill" style="border-color:rgba(56,189,248,0.4); background:rgba(56,189,248,0.12); color:#38bdf8; font-size:0.75rem; font-weight:800; padding:4px 8px;">👑 Admin</span>
+                    <button class="nav-btn logout click-sound" onclick="logout()" title="Keluar">🚪 Keluar</button>
                 </div>
-                <!-- Guru Nav with User Pill -->
-                <div id="guru-nav" class="hidden" style="display:flex; align-items:center; gap:10px;">
-                    <div class="user-pill">
+                <!-- Guru Nav with Compact User Pill -->
+                <div id="guru-nav" class="hidden" style="display:flex; align-items:center; gap:6px;">
+                    <div class="user-pill" title="Guru Aktif">
                         <span class="user-avatar-icon">👨‍🏫</span>
                         <div class="user-info-text">
-                            <span class="user-role-label">Guru Terdaftar</span>
+                            <span class="user-role-label">Guru</span>
                             <span id="header-guru-name" class="user-name-label">Memuat...</span>
                         </div>
                     </div>
@@ -827,6 +920,42 @@
             </div>
         </div>
     </header>
+
+    <!-- FLOATING BOTTOM NAVIGATION BAR (GURU) -->
+    <nav id="bottom-nav-guru" class="bottom-nav-bar hidden">
+        <button class="bottom-nav-item active click-sound" id="bnav-harian" onclick="switchTab('harian')" title="KBM Harian">
+            <span class="bnav-icon">📅</span>
+            <span class="bnav-dot"></span>
+        </button>
+        <button class="bottom-nav-item click-sound" id="bnav-ujian" onclick="switchTab('ujian')" title="Kegiatan Ujian">
+            <span class="bnav-icon">📝</span>
+            <span class="bnav-dot"></span>
+        </button>
+        <button class="bottom-nav-item click-sound" id="bnav-riwayat" onclick="scrollToHistory()" title="Riwayat Input Saya">
+            <span class="bnav-icon">📜</span>
+            <span class="bnav-dot"></span>
+        </button>
+    </nav>
+
+    <!-- FLOATING BOTTOM NAVIGATION BAR (ADMIN / KEPALA SEKOLAH) -->
+    <nav id="bottom-nav-admin" class="bottom-nav-bar hidden">
+        <button class="bottom-nav-item active click-sound" id="bnav-dash" onclick="switchView('dashboard')" title="Dashboard Admin">
+            <span class="bnav-icon">📊</span>
+            <span class="bnav-dot"></span>
+        </button>
+        <button class="bottom-nav-item click-sound" id="bnav-master" onclick="switchView('master')" title="Data Master">
+            <span class="bnav-icon">🗂️</span>
+            <span class="bnav-dot"></span>
+        </button>
+        <button class="bottom-nav-item click-sound" onclick="openServerSettings()" title="Pengaturan Server API">
+            <span class="bnav-icon">⚙️</span>
+            <span class="bnav-dot"></span>
+        </button>
+        <button class="bottom-nav-item click-sound" onclick="openChangePass()" title="Ganti Password Admin">
+            <span class="bnav-icon">🔒</span>
+            <span class="bnav-dot"></span>
+        </button>
+    </nav>
 
     <div class="container">
 
@@ -896,11 +1025,15 @@
                         <div class="mode-selector">
                             <div class="mode-option">
                                 <input type="radio" name="mode" id="t-sendiri" value="sendiri" checked>
-                                <label for="t-sendiri" class="mode-label sendiri click-sound">👤 Sendiri (KBM 1)</label>
+                                <label for="t-sendiri" class="mode-label sendiri click-sound">
+                                    <span>👤</span> Sendiri
+                                </label>
                             </div>
                             <div class="mode-option">
                                 <input type="radio" name="mode" id="t-berdua" value="berdua">
-                                <label for="t-berdua" class="mode-label berdua click-sound">👥 Team (KBM 2)</label>
+                                <label for="t-berdua" class="mode-label berdua click-sound">
+                                    <span>👥</span> Team
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -962,7 +1095,7 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
                     <h2 style="margin:0; font-size:1.4rem;">📊 Dashboard Administrator</h2>
-                    <div style="display:flex; gap:8px;">
+                    <div class="dash-top-actions" style="display:flex; gap:8px;">
                         <button onclick="openServerSettings()" class="nav-btn click-sound">⚙️ Server API</button>
                         <button onclick="openChangePass()" class="nav-btn click-sound">🔒 Password</button>
                     </div>
@@ -1000,7 +1133,7 @@
                     <button class="nav-btn click-sound" onclick="renderMaster('guru')">👨‍🏫 Guru</button>
                     <button class="nav-btn click-sound" onclick="renderMaster('mapel')">📚 Mapel</button>
                     <button class="nav-btn click-sound" onclick="renderMaster('kelas')">🏫 Kelas</button>
-                    <button class="nav-btn click-sound" onclick="renderMaster('tarif')" style="border-color:rgba(16, 185, 129, 0.4); color:#34d399;">⚙️ Tarif & Honor</button>
+                    <button class="nav-btn click-sound" onclick="renderMaster('tarif')" style="border-color:rgba(16, 185, 129, 0.4); color:#34d399;">⚙️ Tarif</button>
                 </div>
                 <h4 id="master-title" style="color:#fff; margin-bottom:10px; font-size:1.1rem; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">Daftar Guru</h4>
                 <input type="text" id="search-master" class="search-bar" placeholder="🔍 Cari data..." oninput="filterMasterDisplay()">
@@ -1109,9 +1242,11 @@
                 // Sembunyikan Onboarding Portal
                 document.getElementById('dialogue-portal').classList.add('hidden');
                 
-                // Tampilkan Form Guru
+                // Tampilkan Form Guru & Bottom Bar Guru
                 switchView('form');
                 document.getElementById('guru-nav').classList.remove('hidden');
+                document.getElementById('bottom-nav-guru').classList.remove('hidden');
+                document.getElementById('bottom-nav-admin').classList.add('hidden');
                 document.getElementById('header-guru-name').textContent = loggedInGuru;
                 kunciFormGuru(loggedInGuru);
                 setTimeout(fetchMyHistory, 400);
@@ -1123,6 +1258,8 @@
             } else {
                 // Tampilkan Onboarding Portal
                 document.getElementById('dialogue-portal').classList.remove('hidden');
+                document.getElementById('bottom-nav-guru').classList.add('hidden');
+                document.getElementById('bottom-nav-admin').classList.add('hidden');
             }
             
             document.querySelectorAll('.click-sound').forEach(b => b.addEventListener('click', playClick));
@@ -1244,6 +1381,8 @@
                         document.getElementById('dialogue-portal').classList.add('hidden');
                         switchView('form');
                         document.getElementById('guru-nav').classList.remove('hidden');
+                        document.getElementById('bottom-nav-guru').classList.remove('hidden');
+                        document.getElementById('bottom-nav-admin').classList.add('hidden');
                         document.getElementById('header-guru-name').textContent = nama;
                         kunciFormGuru(nama);
                         fetchMyHistory();
@@ -1266,6 +1405,8 @@
                 localStorage.setItem('sirekap_admin_pass', pass);
                 document.getElementById('dialogue-portal').classList.add('hidden');
                 document.getElementById('admin-nav').classList.remove('hidden');
+                document.getElementById('bottom-nav-admin').classList.remove('hidden');
+                document.getElementById('bottom-nav-guru').classList.add('hidden');
                 switchView('dashboard');
                 updateSpreadsheetButton();
                 fetchData();
@@ -1301,6 +1442,8 @@
             ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); 
             document.getElementById('admin-nav').classList.add('hidden'); 
             document.getElementById('guru-nav').classList.add('hidden'); 
+            document.getElementById('bottom-nav-guru').classList.add('hidden'); 
+            document.getElementById('bottom-nav-admin').classList.add('hidden'); 
             
             backToStep1();
             document.getElementById('dialogue-portal').classList.remove('hidden');
@@ -1358,11 +1501,22 @@
         }
 
         function switchTab(tab) { 
+            playClick();
             document.querySelectorAll('.tab-btn').forEach(b => {
                 const isMatch = (tab === 'harian' && b.textContent.includes('Harian')) || 
                                 (tab === 'ujian' && b.textContent.includes('Ujian'));
                 b.classList.toggle('active', isMatch);
             }); 
+
+            const bH = document.getElementById('bnav-harian');
+            const bU = document.getElementById('bnav-ujian');
+            const bR = document.getElementById('bnav-riwayat');
+            if (bH && bU) {
+                bH.classList.toggle('active', tab === 'harian');
+                bU.classList.toggle('active', tab === 'ujian');
+                if (bR) bR.classList.remove('active');
+            }
+
             if(tab === 'harian') { 
                 document.getElementById('form-harian').classList.remove('hidden'); 
                 document.getElementById('form-ujian').classList.add('hidden'); 
@@ -1370,6 +1524,21 @@
                 document.getElementById('form-harian').classList.add('hidden'); 
                 document.getElementById('form-ujian').classList.remove('hidden'); 
             } 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToHistory() {
+            playClick();
+            const bH = document.getElementById('bnav-harian');
+            const bU = document.getElementById('bnav-ujian');
+            const bR = document.getElementById('bnav-riwayat');
+            if (bH && bU && bR) {
+                bH.classList.remove('active');
+                bU.classList.remove('active');
+                bR.classList.add('active');
+            }
+            const h = document.getElementById('my-history');
+            if (h) h.scrollIntoView({ behavior: 'smooth' });
         }
 
         function renderUjian() {
@@ -1723,7 +1892,22 @@
         const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
         function playClick(){ if(audioCtx.state==='suspended')audioCtx.resume(); const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.00001,audioCtx.currentTime+0.08);o.stop(audioCtx.currentTime+0.08); }
         
-        function switchView(v) { ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); document.getElementById('view-'+v).classList.remove('hidden'); }
+        function switchView(v) { 
+            playClick();
+            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); 
+            document.getElementById('view-'+v).classList.remove('hidden'); 
+
+            const bDash = document.getElementById('bnav-dash');
+            const bMaster = document.getElementById('bnav-master');
+            if (bDash && bMaster) {
+                bDash.classList.toggle('active', v === 'dashboard');
+                bMaster.classList.toggle('active', v === 'master');
+            }
+            if (v === 'master') {
+                renderMaster(currentMasterType || 'guru');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         
         function fetchMyHistory() {
             if(API_URL === "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") return;
