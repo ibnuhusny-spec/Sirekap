@@ -856,36 +856,6 @@
         </div>
     </div>
 
-    <!-- MODAL GANTI PASSWORD ADMIN -->
-    <div class="card hidden" id="change-pass-box" style="z-index: 10002; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:380px; box-shadow:0 25px 60px rgba(0,0,0,0.8);">
-        <h3 style="margin:0 0 15px 0; color:#fff;">Ganti Password Admin</h3>
-        <div style="text-align:left;">
-            <label>Password Lama</label>
-            <input type="password" id="oldPass" placeholder="...">
-            <label>Password Baru</label>
-            <input type="password" id="newPass" placeholder="...">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-3d btn-success click-sound" onclick="saveNewPassword()">Simpan</button>
-            <button class="btn-3d btn-danger click-sound" onclick="closeChangePass()">Batal</button>
-        </div>
-    </div>
-
-    <!-- MODAL PENGATURAN SERVER API -->
-    <div class="card hidden" id="server-settings-box" style="z-index: 10002; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:440px; box-shadow:0 25px 60px rgba(0,0,0,0.8);">
-        <h3 style="margin:0 0 15px 0; color:#fff;">⚙️ Pengaturan Server API</h3>
-        <div style="text-align:left;">
-            <label>URL Web App Google Script</label>
-            <input type="text" id="custom-api-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:0.85rem;">
-            <p style="color:#64748b; margin-top:-10px; margin-bottom:12px; font-size:0.75rem;">Kosongkan jika ingin kembali ke URL bawaan.</p>
-            <label>Link Google Spreadsheet (Opsional)</label>
-            <input type="text" id="custom-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/..." style="font-size:0.85rem;">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:5px;">
-            <button class="btn-3d btn-success click-sound" onclick="saveServerSettings()">Simpan</button>
-            <button class="btn-3d btn-danger click-sound" onclick="closeServerSettings()">Batal</button>
-        </div>
-    </div>
 
     <!-- TOAST NOTIFIKASI -->
     <div id="notif">Data Tersimpan! ✅</div>
@@ -947,11 +917,11 @@
             <span class="bnav-icon">🗂️</span>
             <span class="bnav-dot"></span>
         </button>
-        <button class="bottom-nav-item click-sound" onclick="openServerSettings()" title="Pengaturan Server API">
+        <button class="bottom-nav-item click-sound" id="bnav-server" onclick="switchView('server')" title="Pengaturan Server API">
             <span class="bnav-icon">⚙️</span>
             <span class="bnav-dot"></span>
         </button>
-        <button class="bottom-nav-item click-sound" onclick="openChangePass()" title="Ganti Password Admin">
+        <button class="bottom-nav-item click-sound" id="bnav-pass" onclick="switchView('pass')" title="Ganti Password Admin">
             <span class="bnav-icon">🔒</span>
             <span class="bnav-dot"></span>
         </button>
@@ -1147,6 +1117,50 @@
                      <button class="btn-3d btn-primary click-sound" style="width:auto; padding:0 22px;" onclick="addMasterGuru()">+</button>
                 </div>
                 <div class="master-list-container"><div id="master-list"></div></div>
+            </div>
+        </div>
+
+        <!-- VIEW PENGATURAN SERVER API (ADMIN) -->
+        <div id="view-server" class="hidden">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h2 style="margin:0; font-size:1.4rem;">⚙️ Pengaturan Server & Database</h2>
+                </div>
+                <p style="font-size:0.85rem; color:#94a3b8; margin-top:0; margin-bottom:20px;">
+                    Konfigurasi URL Google Apps Script dan Google Spreadsheet untuk sinkronisasi data presensi SiRekap.
+                </p>
+                <div style="text-align:left; margin-bottom:15px;">
+                    <label>URL Web App Google Apps Script</label>
+                    <input type="text" id="custom-api-url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:0.88rem;">
+                    <p style="color:#64748b; margin-top:-8px; margin-bottom:14px; font-size:0.75rem;">Kosongkan jika ingin kembali ke URL bawaan sistem.</p>
+                    <label>Link Google Spreadsheet (Database)</label>
+                    <input type="text" id="custom-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/..." style="font-size:0.88rem;">
+                    <p style="color:#64748b; margin-top:-8px; margin-bottom:14px; font-size:0.75rem;">Untuk mengaktifkan tombol pintasan "Buka Spreadsheet" di dashboard.</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
+                    <button class="btn-3d btn-primary click-sound" style="flex:1;" onclick="saveServerSettings()">💾 Simpan Pengaturan</button>
+                    <button class="btn-3d btn-white click-sound" style="width:auto; padding:12px 20px;" onclick="switchView('dashboard')">Batal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW GANTI PASSWORD ADMIN -->
+        <div id="view-pass" class="hidden">
+            <div class="card" style="max-width: 480px; margin: 0 auto;">
+                <h2 style="margin:0 0 10px 0; font-size:1.4rem;">🔒 Ganti Password Kepala Sekolah</h2>
+                <p style="font-size:0.85rem; color:#94a3b8; margin-top:0; margin-bottom:20px;">
+                    Ubah kata sandi akses khusus Kepala Sekolah dan Administrator.
+                </p>
+                <div style="text-align:left; margin-bottom:15px;">
+                    <label>Password Lama</label>
+                    <input type="password" id="oldPass" placeholder="Ketik password saat ini..." autocomplete="current-password">
+                    <label>Password Baru</label>
+                    <input type="password" id="newPass" placeholder="Ketik password baru..." autocomplete="new-password">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
+                    <button class="btn-3d btn-primary click-sound" style="flex:1;" onclick="saveNewPassword()">🔑 Simpan Password Baru</button>
+                    <button class="btn-3d btn-white click-sound" style="width:auto; padding:12px 20px;" onclick="switchView('dashboard')">Batal</button>
+                </div>
             </div>
         </div>
 
@@ -1439,7 +1453,10 @@
             localStorage.removeItem('sirekap_logged_in_guru'); 
             localStorage.removeItem('sirekap_logged_in_pin');
 
-            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); 
+            ['form','dashboard','master','server','pass'].forEach(i => {
+                const el = document.getElementById('view-' + i);
+                if (el) el.classList.add('hidden');
+            }); 
             document.getElementById('admin-nav').classList.add('hidden'); 
             document.getElementById('guru-nav').classList.add('hidden'); 
             document.getElementById('bottom-nav-guru').classList.add('hidden'); 
@@ -1449,23 +1466,29 @@
             document.getElementById('dialogue-portal').classList.remove('hidden');
         }
 
-        function openChangePass() { document.getElementById('change-pass-box').classList.remove('hidden'); }
-        function closeChangePass() { document.getElementById('change-pass-box').classList.add('hidden'); }
+        function openChangePass() { 
+            switchView('pass'); 
+        }
+        function closeChangePass() { 
+            switchView('dashboard'); 
+        }
         function saveNewPassword() { 
-            const n=document.getElementById('newPass').value; 
-            if(document.getElementById('oldPass').value===getAdminPass() && n){
-                localStorage.setItem('sirekap_admin_pass',n);
+            const n = document.getElementById('newPass').value; 
+            if(document.getElementById('oldPass').value === getAdminPass() && n){
+                localStorage.setItem('sirekap_admin_pass', n);
                 showNotif("Password Admin Diperbarui! ✅");
-                closeChangePass();
+                document.getElementById('oldPass').value = '';
+                document.getElementById('newPass').value = '';
+                switchView('dashboard');
             } else alert("Password lama salah atau password baru kosong."); 
         }
         
         function openServerSettings() {
-            document.getElementById('custom-api-url').value = localStorage.getItem('sirekap_custom_api_url') || '';
-            document.getElementById('custom-sheet-url').value = localStorage.getItem('sirekap_custom_sheet_url') || '';
-            document.getElementById('server-settings-box').classList.remove('hidden');
+            switchView('server');
         }
-        function closeServerSettings() { document.getElementById('server-settings-box').classList.add('hidden'); }
+        function closeServerSettings() { 
+            switchView('dashboard'); 
+        }
         function saveServerSettings() {
             const newApi = document.getElementById('custom-api-url').value.trim();
             const newSheet = document.getElementById('custom-sheet-url').value.trim();
@@ -1485,7 +1508,7 @@
             }
             updateSpreadsheetButton();
             showNotif("Pengaturan Server Disimpan! ✅");
-            closeServerSettings();
+            switchView('dashboard');
             syncMaster(false);
             fetchData();
         }
@@ -1894,17 +1917,33 @@
         
         function switchView(v) { 
             playClick();
-            ['form','dashboard','master'].forEach(i=>document.getElementById('view-'+i).classList.add('hidden')); 
-            document.getElementById('view-'+v).classList.remove('hidden'); 
+            ['form','dashboard','master','server','pass'].forEach(i => {
+                const el = document.getElementById('view-' + i);
+                if (el) el.classList.add('hidden');
+            }); 
+            const targetEl = document.getElementById('view-' + v);
+            if (targetEl) targetEl.classList.remove('hidden'); 
 
             const bDash = document.getElementById('bnav-dash');
             const bMaster = document.getElementById('bnav-master');
-            if (bDash && bMaster) {
+            const bServer = document.getElementById('bnav-server');
+            const bPass = document.getElementById('bnav-pass');
+            if (bDash && bMaster && bServer && bPass) {
                 bDash.classList.toggle('active', v === 'dashboard');
                 bMaster.classList.toggle('active', v === 'master');
+                bServer.classList.toggle('active', v === 'server');
+                bPass.classList.toggle('active', v === 'pass');
             }
             if (v === 'master') {
                 renderMaster(currentMasterType || 'guru');
+            }
+            if (v === 'server') {
+                document.getElementById('custom-api-url').value = localStorage.getItem('sirekap_custom_api_url') || '';
+                document.getElementById('custom-sheet-url').value = localStorage.getItem('sirekap_custom_sheet_url') || '';
+            }
+            if (v === 'pass') {
+                document.getElementById('oldPass').value = '';
+                document.getElementById('newPass').value = '';
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
