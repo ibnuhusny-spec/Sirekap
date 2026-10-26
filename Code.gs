@@ -2067,6 +2067,113 @@ function cariKehadiranGuru(targetName, attendanceMap) {
 }
 
 /**
+ * Fitur Tutup Buku & Arsip Bulanan:
+ * 1. Menanyakan nama periode bulan (misal: Oktober 2026)
+ * 2. Menyalin sheet Master_Gaji, KBM, Ujian, dan Presensi ke tab arsip permanen (sebagai values murni)
+ * 3. Mengosongkan data baris KBM dan Ujian (baris 2 ke bawah) agar aplikasi kembali bersih untuk bulan baru
+ * 4. Mereset kolom Kehadiran Transport di Master_Gaji menjadi 0
+ * 5. Menjaga Master Guru, PIN, Mapel, Kelas, dan sheet Tarif tetap 100% utuh dan aman
+ */
+function tutupBukuBulanan() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const response = ui.prompt(
+    "📦 Tutup Buku & Arsip Bulanan",
+    "Masukkan nama bulan & tahun untuk diarsipkan (contoh: Oktober 2026):\n\n" +
+    "Data bulan ini akan otomatis diarsipkan secara permanen, lalu sheet KBM & Ujian akan dikosongkan agar siap untuk bulan berikutnya.",
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+
+  const periode = response.getResponseText().trim();
+  if (!periode) {
+    ui.alert("⚠️ Nama periode tidak boleh kosong. Proses dibatalkan.");
+    return;
+  }
+
+  // Format label aman untuk nama sheet (misal 'Okt_2026' atau 'Oktober_2026')
+  const tagPeriode = periode.replace(/[^a-zA-Z0-9]/g, "_");
+
+  // 1. Arsipkan Sheet Master_Gaji (Simpan sebagai Nilai Murni / Values agar rekap gaji bulan ini terkunci permanen)
+  const sMasterGaji = ss.getSheetByName("Master_Gaji");
+  if (sMasterGaji && sMasterGaji.getLastRow() >= 2) {
+    const archiveGajiName = "Gaji_" + tagPeriode;
+    let sArchGaji = ss.getSheetByName(archiveGajiName);
+    if (sArchGaji) ss.deleteSheet(sArchGaji);
+    sArchGaji = sMasterGaji.copyTo(ss);
+    sArchGaji.setName(archiveGajiName);
+    const range = sArchGaji.getDataRange();
+    range.setValues(range.getValues());
+  }
+
+  // 2. Arsipkan Sheet KBM
+  const sKBM = ss.getSheetByName(SHEET_KBM);
+  let jmlKBM = 0;
+  if (sKBM && sKBM.getLastRow() >= 2) {
+    jmlKBM = sKBM.getLastRow() - 1;
+    const archiveKBMName = "KBM_" + tagPeriode;
+    let sArchKBM = ss.getSheetByName(archiveKBMName);
+    if (sArchKBM) ss.deleteSheet(sArchKBM);
+    sArchKBM = sKBM.copyTo(ss);
+    sArchKBM.setName(archiveKBMName);
+    const range = sArchKBM.getDataRange();
+    range.setValues(range.getValues());
+
+    // Kosongkan baris 2 ke bawah
+    sKBM.deleteRows(2, jmlKBM);
+  }
+
+  // 3. Arsipkan Sheet Ujian
+  const sUjian = ss.getSheetByName(SHEET_UJIAN);
+  let jmlUjian = 0;
+  if (sUjian && sUjian.getLastRow() >= 2) {
+    jmlUjian = sUjian.getLastRow() - 1;
+    const archiveUjianName = "Ujian_" + tagPeriode;
+    let sArchUjian = ss.getSheetByName(archiveUjianName);
+    if (sArchUjian) ss.deleteSheet(sArchUjian);
+    sArchUjian = sUjian.copyTo(ss);
+    sArchUjian.setName(archiveUjianName);
+    const range = sArchUjian.getDataRange();
+    range.setValues(range.getValues());
+
+    // Kosongkan baris 2 ke bawah
+    sUjian.deleteRows(2, jmlUjian);
+  }
+
+  // 4. Arsipkan Sheet Presensi jika ada
+  const sPresensi = ss.getSheetByName("Presensi");
+  if (sPresensi && sPresensi.getLastRow() >= 2) {
+    const archivePresensiName = "Presensi_" + tagPeriode;
+    let sArchPresensi = ss.getSheetByName(archivePresensiName);
+    if (sArchPresensi) ss.deleteSheet(sArchPresensi);
+    sArchPresensi = sPresensi.copyTo(ss);
+    sArchPresensi.setName(archivePresensiName);
+    const range = sArchPresensi.getDataRange();
+    range.setValues(range.getValues());
+  }
+
+  // 5. Reset Kehadiran Presensi di Master_Gaji (Kolom R) menjadi 0 untuk bulan baru
+  if (sMasterGaji && sMasterGaji.getLastRow() >= 2) {
+    sMasterGaji.getRange(2, 18, sMasterGaji.getLastRow() - 1, 1).setValue(0);
+  }
+
+  // 6. Sinkronkan kembali rumus
+  sinkronkanMasterGaji();
+
+  ui.alert(
+    "✅ Tutup Buku Berhasil!",
+    `Laporan periode "${periode}" telah berhasil diarsipkan ke spreadsheet:\n\n` +
+    `📁 Gaji_${tagPeriode} (Rekap Gaji Permanen)\n` +
+    `📁 KBM_${tagPeriode} (${jmlKBM} Data Jam Mengajar)\n` +
+    `📁 Ujian_${tagPeriode} (${jmlUjian} Data Honor Ujian)\n\n` +
+    `Sheet KBM dan Ujian telah dikosongkan. Aplikasi SiRekap di HP Guru otomatis bersih kembali dan siap digunakan untuk bulan berikutnya! 🟢`,
+    ui.ButtonSet.OK
+  );
+}
+
+/**
  * Menu otomatis di Google Spreadsheet: memudahkan admin menjalankan fungsi tanpa buka Apps Script
  */
 function onOpen() {
@@ -2077,5 +2184,7 @@ function onOpen() {
     .addItem("🔢 Urutkan Ulang Nomor Kode Guru (Otomatis)", "urutkanUlangKodeGuru")
     .addItem("📥 Tarik Kehadiran dari Sheet Presensi", "tarikKehadiranPresensi")
     .addItem("🔄 Perbarui Rumus Slip Gaji & Sinkronkan Ujian", "sinkronkanMasterGaji")
+    .addSeparator()
+    .addItem("📦 Tutup Buku & Arsipkan Data Bulanan (Bulan Baru)", "tutupBukuBulanan")
     .addToUi();
 }

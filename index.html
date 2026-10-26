@@ -344,11 +344,17 @@
                     <a id="btn-open-spreadsheet" href="#" target="_blank" class="btn-3d btn-success click-sound hidden" style="width:auto; padding:12px 18px; text-decoration:none;">📂 Buka Spreadsheet</a>
                 </div>
                 <div class="dash-section">
-                    <div class="dash-header"><h3>Absensi KBM Harian</h3></div>
+                    <div class="dash-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="margin:0;">Absensi KBM Harian</h3>
+                        <button onclick="downloadCSV('kbm')" class="btn-3d btn-primary click-sound" style="width:auto; padding:6px 14px; font-size:0.75rem;">📥 Unduh CSV</button>
+                    </div>
                     <div class="table-scroll-container"><table id="dash-table-kbm"><thead><tr><th>Tgl</th><th>Guru</th><th>Detail</th><th>Jam</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;padding:20px;">Loading...</td></tr></tbody></table></div>
                 </div>
                 <div class="dash-section green">
-                    <div class="dash-header"><h3 style="color:var(--success);">Absensi Ujian Semester</h3></div>
+                    <div class="dash-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 style="color:var(--success); margin:0;">Absensi Ujian Semester</h3>
+                        <button onclick="downloadCSV('ujian')" class="btn-3d btn-success click-sound" style="width:auto; padding:6px 14px; font-size:0.75rem;">📥 Unduh CSV</button>
+                    </div>
                     <div class="table-scroll-container" style="border-color:var(--success);"><table id="dash-table-ujian"><thead><tr><th>Tgl</th><th>Guru</th><th>Kegiatan</th><th>Vol</th></tr></thead><tbody><tr><td colspan="4" style="text-align:center;padding:20px;">Loading...</td></tr></tbody></table></div>
                 </div>
             </div>
@@ -855,13 +861,90 @@
         
         function escapeHTML(str) { if (!str) return ""; return String(str).replace(/[&<>'"]/g, match => { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[match]; }); }
 
+        let dashKBMData = [];
+        let dashUjianData = [];
+
+        function downloadCSV(type) {
+            const isKBM = (type === 'kbm');
+            const data = isKBM ? dashKBMData : dashUjianData;
+            if (!data || data.length === 0) return alert("Belum ada data untuk diunduh. Silakan klik 'Refresh Data' terlebih dahulu.");
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM agar Excel membaca karakter khusus dengan rapi
+            if (isKBM) {
+                csvContent += "Tanggal;Waktu;Kode;Nama Guru;Status;Mapel;Kelas;Mode;Jam Sendiri;Jam Team\n";
+                data.forEach(r => {
+                    const row = [
+                        `"${r.Tanggal || ''}"`,
+                        `"${r.Waktu || ''}"`,
+                        `"${r.Kode || ''}"`,
+                        `"${r.Nama || ''}"`,
+                        `"${r.Status || 'Tetap'}"`,
+                        `"${r.Mapel || ''}"`,
+                        `"${r.Kelas || ''}"`,
+                        `"${r.Mode || ''}"`,
+                        r['Jam Sendiri'] || 0,
+                        r['Jam Team'] || 0
+                    ];
+                    csvContent += row.join(";") + "\n";
+                });
+            } else {
+                csvContent += "Tanggal;Kode;Nama Guru;Kategori;Rincian;Volume;Nominal\n";
+                data.forEach(r => {
+                    const row = [
+                        `"${r.Tanggal || ''}"`,
+                        `"${r.Kode || ''}"`,
+                        `"${r.Nama || ''}"`,
+                        `"${r.Kategori || ''}"`,
+                        `"${r.Rincian || ''}"`,
+                        r.Volume || 1,
+                        r.Nominal || 0
+                    ];
+                    csvContent += row.join(";") + "\n";
+                });
+            }
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            link.setAttribute("download", `Rekap_${type.toUpperCase()}_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         function fetchData() {
             // SECURITY: Minta data dengan password admin
             const adminQuery = "&admin_pass=" + encodeURIComponent(getAdminPass());
             
-            fetch(API_URL+"?action=read" + adminQuery).then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-kbm tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Mapel||'-')}<br><small>${escapeHTML(r.Kelas||'')}</small></td><td>${escapeHTML(r['Jam Sendiri']||r['Jam Team'])} JP</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; }).catch(() => { document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
+            fetch(API_URL+"?action=read" + adminQuery).then(r=>r.json()).then(d=>{ 
+                const tb=document.querySelector('#dash-table-kbm tbody'); 
+                tb.innerHTML=''; 
+                if(d.data && d.data.length > 0) {
+                    dashKBMData = d.data;
+                    d.data.slice(0,100).forEach(r=>{ 
+                        tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Mapel||'-')}<br><small>${escapeHTML(r.Kelas||'')}</small></td><td>${escapeHTML(r['Jam Sendiri']||r['Jam Team'])} JP</td></tr>`;
+                    }); 
+                } else {
+                    dashKBMData = [];
+                    tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; 
+                }
+            }).catch(() => { document.querySelector('#dash-table-kbm tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
             
-            fetch(API_URL+"?action=read_ujian" + adminQuery).then(r=>r.json()).then(d=>{ const tb=document.querySelector('#dash-table-ujian tbody'); tb.innerHTML=''; if(d.data&&d.data.length>0) d.data.slice(0,50).forEach(r=>{ tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Kategori)}<br><small>${escapeHTML(r.Rincian)}</small></td><td>${escapeHTML(r.Volume)}</td></tr>`;}); else tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; }).catch(() => { document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
+            fetch(API_URL+"?action=read_ujian" + adminQuery).then(r=>r.json()).then(d=>{ 
+                const tb=document.querySelector('#dash-table-ujian tbody'); 
+                tb.innerHTML=''; 
+                if(d.data && d.data.length > 0) {
+                    dashUjianData = d.data;
+                    d.data.slice(0,100).forEach(r=>{ 
+                        tb.innerHTML+=`<tr><td>${escapeHTML(r.Tanggal)}</td><td>${escapeHTML((r.Kode?r.Kode+' ':'')+r.Nama)}</td><td>${escapeHTML(r.Kategori)}<br><small>${escapeHTML(r.Rincian)}</small></td><td>${escapeHTML(r.Volume)}</td></tr>`;
+                    }); 
+                } else {
+                    dashUjianData = [];
+                    tb.innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">Data Kosong / Akses Ditolak</td></tr>'; 
+                }
+            }).catch(() => { document.querySelector('#dash-table-ujian tbody').innerHTML='<tr><td colspan="4" style="text-align:center; padding: 20px; color: #ef4444;">Gagal memuat data</td></tr>'; });
         }
         
         function filterMasterDisplay() { const query = document.getElementById('search-master').value.toLowerCase(); document.querySelectorAll('.master-item').forEach(i => { const text = i.querySelector('span').textContent.toLowerCase(); i.style.display = text.includes(query) ? 'flex' : 'none'; }); }
