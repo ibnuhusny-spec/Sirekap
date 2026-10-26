@@ -169,8 +169,18 @@ function syncPresensiFromRFID(p) {
     return { result: "error", message: "Format JSON guru_data tidak valid." };
   }
 
+  // Filter proteksi ganda: pastikan data murid/siswa tidak dimasukkan ke sheet Presensi SiRekap
+  guruList = guruList.filter(g => {
+    const peran = String(g.peran || "").toLowerCase().trim();
+    const kelas = String(g.kelas || g.jabatan || "").toLowerCase().trim();
+    if (peran === "murid" || peran === "siswa" || /^kelas\s*\d/i.test(kelas)) {
+      return false;
+    }
+    return true;
+  });
+
   if (guruList.length === 0) {
-    return { result: "error", message: "Data presensi guru kosong." };
+    return { result: "error", message: "Data presensi guru kosong atau seluruh data teridentifikasi sebagai murid." };
   }
 
   const periode = p.periode || ("Bulan " + Utilities.formatDate(new Date(), "Asia/Makassar", "MMMM yyyy"));
