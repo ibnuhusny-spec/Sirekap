@@ -2032,8 +2032,8 @@ function tarikKehadiranPresensi() {
     if (!teacherName) continue;
 
     const matchedHari = cariKehadiranGuru(teacherName, attendanceMap);
+    sMasterGaji.getRange(i + 2, 18).setValue(matchedHari !== null ? matchedHari : 0);
     if (matchedHari !== null) {
-      sMasterGaji.getRange(i + 2, 18).setValue(matchedHari);
       updatedCount++;
     }
   }
