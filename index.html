@@ -355,13 +355,14 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h2 style="margin:0;">🗂️ Data Master</h2>
-                    <button class="btn-3d btn-success click-sound" style="width:auto; padding:10px 15px;" onclick="saveMasterToCloud()">💾 Simpan Cloud</button>
+                    <button id="btn-save-master-cloud" class="btn-3d btn-success click-sound" style="width:auto; padding:10px 15px;" onclick="saveMasterToCloud()">💾 Simpan Cloud</button>
                 </div>
                 <p style="font-size:0.8rem; color:#64748b; margin-top:5px; margin-bottom:20px;">Kelola daftar nama agar muncul di HP Guru.</p>
                 <div class="master-tabs">
                     <button class="btn-3d btn-info click-sound" onclick="renderMaster('guru')">Guru</button>
                     <button class="btn-3d btn-purple click-sound" onclick="renderMaster('mapel')">Mapel</button>
                     <button class="btn-3d btn-warning click-sound" onclick="renderMaster('kelas')">Kelas</button>
+                    <button class="btn-3d btn-success click-sound" onclick="renderMaster('tarif')">Tarif & Honor</button>
                 </div>
                 <h4 id="master-title" style="color:var(--text-main); margin-bottom:10px; font-size:1.1rem; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">Daftar Guru</h4>
                 <input type="text" id="search-master" class="search-bar" placeholder="🔍 Cari data..." oninput="filterMasterDisplay()">
@@ -388,6 +389,7 @@
         
         const ADMIN_PASS = "admin123";
         let MASTER = { guru: [], mapel: [], kelas: [] };
+        let TARIF = JSON.parse(localStorage.getItem('sirekap_tarif') || 'null');
         let currentMasterType = 'guru';
         let currentEditIndex = -1;
         let myHistoryData = []; 
@@ -398,6 +400,7 @@
             document.getElementById('time').value = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
             const savedM = localStorage.getItem('sirekap_master');
             if(savedM) MASTER = JSON.parse(savedM);
+            updateUjianDropdown();
             
             if(API_URL !== "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") { 
                 document.getElementById('status-koneksi').textContent = "🟢 Online"; 
@@ -654,26 +657,146 @@
             list.style.display = 'block';
         }
 
+        function formatRupiah(num) {
+            return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+        }
+
+        function updateUjianDropdown() {
+            const select = document.getElementById('cat_ujian');
+            if (!select) return;
+            const tMap = (TARIF && TARIF.ujian) ? TARIF.ujian : {
+                mengawas: 10000,
+                tulis_soal: 20000,
+                periksa: 5000,
+                praktik: 10000,
+                rapor: 30000
+            };
+            const currentVal = select.value;
+            const options = [
+                { val: "", text: "-- Pilih Kegiatan --", disabled: true },
+                { val: "mengawas", text: `👀 Mengawas Ujian (${formatRupiah(tMap.mengawas || 10000)} / sesi)` },
+                { val: "tulis_soal", text: `✍️ Menulis Soal (${formatRupiah(tMap.tulis_soal || 20000)} / paket)` },
+                { val: "periksa", text: `📝 Periksa Soal (${formatRupiah(tMap.periksa || 5000)} / siswa)` },
+                { val: "praktik", text: `🔬 Ujian Praktik (${formatRupiah(tMap.praktik || 10000)} / siswa)` },
+                { val: "rapor", text: `📄 Penulisan Rapor (${formatRupiah(tMap.rapor || 30000)} / siswa)` }
+            ];
+            select.innerHTML = '';
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.val;
+                o.textContent = opt.text;
+                if (opt.disabled) {
+                    o.disabled = true;
+                    if (!currentVal) o.selected = true;
+                }
+                if (currentVal && opt.val === currentVal) o.selected = true;
+                select.appendChild(o);
+            });
+        }
+
         function syncMaster(showNotifParam = false) {
             if(API_URL === "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") return;
             fetch(API_URL+"?action=get_master").then(r=>r.json()).then(d=>{
                 if(d.result==='success'){ 
-                    if(d.teachers.length) MASTER.guru = d.teachers; 
-                    if(d.subjects.length) MASTER.mapel = d.subjects; 
-                    if(d.classes.length) MASTER.kelas = d.classes; 
+                    if(d.teachers && d.teachers.length) MASTER.guru = d.teachers; 
+                    if(d.subjects && d.subjects.length) MASTER.mapel = d.subjects; 
+                    if(d.classes && d.classes.length) MASTER.kelas = d.classes; 
                     localStorage.setItem('sirekap_master', JSON.stringify(MASTER)); 
+                    if(d.tarif) {
+                        TARIF = d.tarif;
+                        localStorage.setItem('sirekap_tarif', JSON.stringify(d.tarif));
+                        updateUjianDropdown();
+                    }
                     if(currentMasterType && !document.getElementById('view-master').classList.contains('hidden')) renderMaster(currentMasterType); 
-                    if(showNotifParam) showNotif("Data Master Diperbarui"); 
+                    if(showNotifParam) showNotif("Data Master & Tarif Diperbarui ✅"); 
                 }
             }).catch(e => console.log("Gagal sync master"));
         }
 
         function renderMaster(type) {
-            currentMasterType = type; document.getElementById('master-title').textContent = "Daftar " + type.toUpperCase(); document.getElementById('search-master').value = ''; 
-            if(type === 'guru') { document.getElementById('master-input-container').style.display = 'none'; document.getElementById('master-input-guru').style.display = 'flex'; } else { document.getElementById('master-input-container').style.display = 'flex'; document.getElementById('master-input-guru').style.display = 'none'; }
-            document.querySelectorAll('#view-master .nav-btn').forEach(b => b.style.background = '#e2e8f0'); event.target.style.background = '#bfdbfe';
-            const list = document.getElementById('master-list'); list.innerHTML = '';
-            let sortedData = MASTER[type]; if (type === 'guru') { sortedData.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})); } else { sortedData.sort(); }
+            currentMasterType = type; 
+            document.querySelectorAll('#view-master .master-tabs button').forEach(b => b.style.opacity = '0.6');
+            if (event && event.target && event.target.tagName === 'BUTTON') event.target.style.opacity = '1';
+
+            const btnSaveCloud = document.getElementById('btn-save-master-cloud');
+            const searchMaster = document.getElementById('search-master');
+            const masterInputCont = document.getElementById('master-input-container');
+            const masterInputGuru = document.getElementById('master-input-guru');
+            const list = document.getElementById('master-list');
+
+            if (type === 'tarif') {
+                document.getElementById('master-title').textContent = "⚙️ Pengaturan Tarif & Honor (Langsung dari Sheet Tarif)";
+                if (btnSaveCloud) btnSaveCloud.style.display = 'none';
+                searchMaster.style.display = 'none';
+                masterInputCont.style.display = 'none';
+                masterInputGuru.style.display = 'none';
+
+                const tUjian = (TARIF && TARIF.ujian) ? TARIF.ujian : { mengawas: 10000, tulis_soal: 20000, periksa: 5000, praktik: 10000, rapor: 30000 };
+                const tKbm = (TARIF && TARIF.kbm) ? TARIF.kbm : { sendiri: 12000, team: 10000 };
+                const tTunjangan = (TARIF && TARIF.tunjangan) ? TARIF.tunjangan : { transport: 7500, wali: 100000, kesehatan: 50000 };
+
+                list.innerHTML = `
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="margin:0; color:#0f172a;">🎯 Tarif Kegiatan Ujian</h4>
+                            <span style="font-size:0.75rem; background:#dcfce7; color:#166534; padding:3px 8px; border-radius:999px; font-weight:700;">Sheet Tarif Kolom A-B</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>👀 Mengawas:</strong> <span style="color:#059669; font-weight:700;">${formatRupiah(tUjian.mengawas || 10000)} / sesi</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>✍️ Menulis Soal:</strong> <span style="color:#059669; font-weight:700;">${formatRupiah(tUjian.tulis_soal || 20000)} / paket</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>📝 Periksa Soal:</strong> <span style="color:#059669; font-weight:700;">${formatRupiah(tUjian.periksa || 5000)} / siswa</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>🔬 Praktik:</strong> <span style="color:#059669; font-weight:700;">${formatRupiah(tUjian.praktik || 10000)} / siswa</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>📄 Penulisan Rapor:</strong> <span style="color:#059669; font-weight:700;">${formatRupiah(tUjian.rapor || 30000)} / siswa</span></div>
+                        </div>
+                    </div>
+
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="margin:0; color:#0f172a;">📖 Insentif Mengajar (KBM)</h4>
+                            <span style="font-size:0.75rem; background:#e0e7ff; color:#3730a3; padding:3px 8px; border-radius:999px; font-weight:700;">Sheet Tarif Kolom D-E</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>👤 Jam Sendiri (KBM 1):</strong> <span style="color:#4f46e5; font-weight:700;">${formatRupiah(tKbm.sendiri || 12000)} / jam</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>👥 Jam Team (KBM 2):</strong> <span style="color:#4f46e5; font-weight:700;">${formatRupiah(tKbm.team || 10000)} / jam</span></div>
+                        </div>
+                    </div>
+
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h4 style="margin:0; color:#0f172a;">💼 Tunjangan & Kehadiran</h4>
+                            <span style="font-size:0.75rem; background:#fef3c7; color:#92400e; padding:3px 8px; border-radius:999px; font-weight:700;">Sheet Tarif Kolom G-H</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>🚗 Transport:</strong> <span style="color:#d97706; font-weight:700;">${formatRupiah(tTunjangan.transport || 7500)} / kehadiran</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>👨‍🏫 Wali Kelas:</strong> <span style="color:#d97706; font-weight:700;">${formatRupiah(tTunjangan.wali || 100000)} / bln</span></div>
+                            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;"><strong>🏥 Kesehatan:</strong> <span style="color:#d97706; font-weight:700;">${formatRupiah(tTunjangan.kesehatan || 50000)} / bln</span></div>
+                        </div>
+                    </div>
+
+                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:16px;">
+                        <h4 style="margin:0 0 8px 0; color:#065f46;">💡 Cara Mengubah Tarif Tanpa Mengubah Koding:</h4>
+                        <ol style="margin:0; padding-left:20px; color:#047857; font-size:0.875rem; line-height:1.6;">
+                            <li>Buka Google Spreadsheet SiRekap Anda.</li>
+                            <li>Pilih sheet bernama <strong>"Tarif"</strong>.</li>
+                            <li>Ubah angka nominal pada kolom tarif yang diinginkan (misal ganti 20000 menjadi 25000).</li>
+                            <li>Selesai! Aplikasi web, slip gaji, dan master gaji akan langsung otomatis menggunakan tarif baru tersebut tanpa perlu menyentuh kodingan!</li>
+                        </ol>
+                        <div style="margin-top:14px; text-align:right;">
+                            <button class="btn-3d btn-primary click-sound" style="width:auto; padding:8px 16px; font-size:0.85rem;" onclick="syncMaster(true)">🔄 Sinkronkan Tarif Sekarang</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (btnSaveCloud) btnSaveCloud.style.display = 'block';
+            searchMaster.style.display = 'block';
+            document.getElementById('master-title').textContent = "Daftar " + type.toUpperCase(); 
+            searchMaster.value = ''; 
+            if(type === 'guru') { masterInputCont.style.display = 'none'; masterInputGuru.style.display = 'flex'; } else { masterInputCont.style.display = 'flex'; masterInputGuru.style.display = 'none'; }
+            
+            list.innerHTML = '';
+            let sortedData = MASTER[type] || []; if (type === 'guru') { sortedData.sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})); } else { sortedData.sort(); }
             sortedData.forEach((item,idx) => { list.innerHTML += `<div class="master-item"><span>${item}</span> <div style="display:flex; gap:5px;"><button class="btn-icon btn-edit-item" style="width:28px; height:28px;" onclick="openEditModal('${type}', ${idx})">✎</button><button class="btn-icon btn-del-item" style="width:28px; height:28px;" onclick="delMaster('${type}',${idx})">✕</button></div></div>`; });
         }
         function addMaster() { const v = document.getElementById('new-master').value.trim(); if(v) { MASTER[currentMasterType].push(v); renderMaster(currentMasterType); document.getElementById('new-master').value=''; saveMasterToCloud(true); } }

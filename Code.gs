@@ -265,11 +265,22 @@ function getMasterData() {
   const subjects = rawMapel.map(r => String(r[0]).trim()).filter(v => v !== "");
   const classes = rawKelas.map(r => String(r[0]).trim()).filter(v => v !== "");
 
+  // Ambil data tarif terbaru dari spreadsheet
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tarifUjian = getTarifUjianMap(ss);
+  const tarifKBM = getTarifKBM(ss);
+  const tarifTunjangan = getTarifTunjangan(ss);
+
   return {
     result: "success",
     teachers: teachers,
     subjects: subjects,
-    classes: classes
+    classes: classes,
+    tarif: {
+      ujian: tarifUjian,
+      kbm: tarifKBM,
+      tunjangan: tarifTunjangan
+    }
   };
 }
 
@@ -460,25 +471,258 @@ function insertKBM(p) {
   return { result: "success", message: "Data KBM tersimpan." };
 }
 
+// =========================================================================
+// PENGATURAN TARIF DINAMIS (UJIAN, KBM, TUNJANGAN)
+// =========================================================================
+
 /**
- * Menghitung nominal honor kegiatan Ujian secara otomatis
- * berdasarkan jenis kegiatan, volume, dan status potongan 25% di Master_Gaji
+ * Mencari sheet Tarif di Spreadsheet (mencakup alias 'Tarif', 'Tarif_Ujian', 'Pengaturan', atau sheet dengan header 'KATEGORI UJIAN')
  */
-function hitungNominalUjian(kategori, volume, kodeGuru, namaGuru) {
-  const tarifMap = {
-    "MENGAWAS": 10000,
-    "TULIS_SOAL": 20000,
-    "PERIKSA": 5000,
-    "PRAKTIK": 10000,
-    "RAPOR": 30000
+function findSheetTarif(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  const names = ["Tarif", "Tarif_Ujian", "Tarif Ujian", "Pengaturan"];
+  for (const n of names) {
+    const s = ss.getSheetByName(n);
+    if (s) return s;
+  }
+
+  const allSheets = ss.getSheets();
+  for (const s of allSheets) {
+    try {
+      const a1 = String(s.getRange("A1").getValue() || "").trim().toUpperCase();
+      if (a1 === "KATEGORI UJIAN" || a1.indexOf("KATEGORI UJIAN") !== -1) {
+        return s;
+      }
+    } catch(e) {}
+  }
+
+  return null;
+}
+
+/**
+ * Menyiapkan sheet 'Tarif' sebagai tabel kontrol harga/tarif lengkap di spreadsheet
+ * Sesuai gambar:
+ * - Kolom A & B: Tarif Kegiatan Ujian
+ * - Kolom D & E: Tarif KBM (Jam Sendiri & Jam Team)
+ * - Kolom G & H: Tarif Tunjangan (Transport, Wali Kelas, Kesehatan)
+ */
+function setupSheetTarif(ss) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sTarif = findSheetTarif(ss);
+  
+  if (!sTarif) {
+    sTarif = ss.insertSheet("Tarif");
+  }
+
+  // 1. Tabel Tarif Kegiatan Ujian (Kolom A & B)
+  const a1 = String(sTarif.getRange("A1").getValue() || "").trim().toUpperCase();
+  if (a1 !== "KATEGORI UJIAN" && a1.indexOf("KATEGORI UJIAN") === -1) {
+    sTarif.getRange("A1:B1").setValues([["KATEGORI UJIAN", "TARIF (Rp)"]]);
+    sTarif.getRange("A1:B1").setBackground("#dcfce7").setFontColor("#065f46").setFontWeight("bold");
+    
+    const rowsUjian = [
+      ["mengawas", 10000],
+      ["tulis_soal", 20000],
+      ["periksa", 5000],
+      ["praktik", 10000],
+      ["rapor", 30000]
+    ];
+    sTarif.getRange(2, 1, rowsUjian.length, 2).setValues(rowsUjian);
+    sTarif.getRange(2, 2, rowsUjian.length, 1).setNumberFormat('"Rp"#,##0');
+  }
+
+  // 2. Tabel Tarif KBM (Kolom D & E)
+  const d1 = String(sTarif.getRange("D1").getValue() || "").trim().toUpperCase();
+  if (d1 !== "JENIS KBM" && d1.indexOf("KBM") === -1) {
+    sTarif.getRange("D1:E1").setValues([["JENIS KBM", "TARIF PER JAM (Rp)"]]);
+    sTarif.getRange("D1:E1").setBackground("#e0e7ff").setFontColor("#3730a3").setFontWeight("bold");
+    const rowsKBM = [
+      ["Jam Sendiri (KBM 1)", 12000],
+      ["Jam Team (KBM 2)", 10000]
+    ];
+    sTarif.getRange(2, 4, rowsKBM.length, 2).setValues(rowsKBM);
+    sTarif.getRange(2, 5, rowsKBM.length, 1).setNumberFormat('"Rp"#,##0');
+  }
+
+  // 3. Tabel Tarif Tunjangan (Kolom G & H)
+  const g1 = String(sTarif.getRange("G1").getValue() || "").trim().toUpperCase();
+  if (g1 !== "JENIS TUNJANGAN" && g1.indexOf("TUNJANGAN") === -1) {
+    sTarif.getRange("G1:H1").setValues([["JENIS TUNJANGAN", "NOMINAL (Rp)"]]);
+    sTarif.getRange("G1:H1").setBackground("#fef3c7").setFontColor("#92400e").setFontWeight("bold");
+    const rowsTunjangan = [
+      ["Transport per Kehadiran (Hari)", 7500],
+      ["Tunjangan Wali Kelas", 100000],
+      ["Tunjangan Kesehatan", 50000]
+    ];
+    sTarif.getRange(2, 7, rowsTunjangan.length, 2).setValues(rowsTunjangan);
+    sTarif.getRange(2, 8, rowsTunjangan.length, 1).setNumberFormat('"Rp"#,##0');
+  }
+
+  sTarif.setColumnWidth(1, 140);
+  sTarif.setColumnWidth(2, 110);
+  sTarif.setColumnWidth(3, 30);
+  sTarif.setColumnWidth(4, 180);
+  sTarif.setColumnWidth(5, 150);
+  sTarif.setColumnWidth(6, 30);
+  sTarif.setColumnWidth(7, 220);
+  sTarif.setColumnWidth(8, 130);
+
+  return sTarif;
+}
+
+/**
+ * Membaca peta tarif ujian dari sheet Tarif di Spreadsheet
+ */
+function getTarifUjianMap(ss) {
+  const defaultTarif = {
+    "mengawas": 10000,
+    "tulis_soal": 20000,
+    "periksa": 5000,
+    "praktik": 10000,
+    "rapor": 30000
   };
 
-  const rawCat = String(kategori || "").trim().toUpperCase().replace(/\s+/g, "_");
+  try {
+    if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = findSheetTarif(ss);
+    if (!sheet || sheet.getLastRow() < 2) return defaultTarif;
+
+    const lastRow = sheet.getLastRow();
+    const values = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    const tarifMap = { ...defaultTarif };
+
+    values.forEach(r => {
+      const rawCat = String(r[0] || "").trim().toLowerCase();
+      if (!rawCat) return;
+
+      let num = 0;
+      if (typeof r[1] === "number") {
+        num = r[1];
+      } else {
+        const cleanStr = String(r[1] || "").replace(/[^0-9]/g, "");
+        num = cleanStr ? Number(cleanStr) : 0;
+      }
+
+      if (num > 0) {
+        const key = rawCat.replace(/[\s\-]+/g, "_");
+        tarifMap[key] = num;
+
+        if (key.indexOf("mengawas") !== -1 || key.indexOf("awas") !== -1) tarifMap["mengawas"] = num;
+        if (key.indexOf("tulis") !== -1 || key.indexOf("soal") !== -1 || key.indexOf("menulis") !== -1) tarifMap["tulis_soal"] = num;
+        if (key.indexOf("periksa") !== -1) tarifMap["periksa"] = num;
+        if (key.indexOf("praktik") !== -1 || key.indexOf("praktek") !== -1) tarifMap["praktik"] = num;
+        if (key.indexOf("rapor") !== -1 || key.indexOf("raport") !== -1) tarifMap["rapor"] = num;
+      }
+    });
+
+    return tarifMap;
+  } catch(e) {
+    return defaultTarif;
+  }
+}
+
+/**
+ * Membaca tarif KBM dari sheet Tarif (Jam Sendiri & Jam Team)
+ */
+function getTarifKBM(ss) {
+  const defaultKBM = { sendiri: 12000, team: 10000 };
+  try {
+    if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = findSheetTarif(ss);
+    if (!sheet || sheet.getLastRow() < 2 || sheet.getLastColumn() < 5) return defaultKBM;
+
+    const lastRow = sheet.getLastRow();
+    const values = sheet.getRange(2, 4, Math.min(lastRow - 1, 10), 2).getValues();
+    const res = { ...defaultKBM };
+
+    values.forEach(r => {
+      const name = String(r[0] || "").toLowerCase();
+      let num = typeof r[1] === "number" ? r[1] : Number(String(r[1] || "").replace(/[^0-9]/g, "")) || 0;
+      if (num > 0) {
+        if (name.indexOf("sendiri") !== -1 || name.indexOf("kbm 1") !== -1 || name.indexOf("kbm1") !== -1) {
+          res.sendiri = num;
+        } else if (name.indexOf("team") !== -1 || name.indexOf("kbm 2") !== -1 || name.indexOf("kbm2") !== -1) {
+          res.team = num;
+        }
+      }
+    });
+
+    return res;
+  } catch(e) {
+    return defaultKBM;
+  }
+}
+
+/**
+ * Membaca tarif tunjangan (transport, wali kelas, kesehatan) dari sheet Tarif
+ */
+function getTarifTunjangan(ss) {
+  const defaultTunjangan = { transport: 7500, wali: 100000, kesehatan: 50000 };
+  try {
+    if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = findSheetTarif(ss);
+    if (!sheet || sheet.getLastRow() < 2 || sheet.getLastColumn() < 8) return defaultTunjangan;
+
+    const lastRow = sheet.getLastRow();
+    const values = sheet.getRange(2, 7, Math.min(lastRow - 1, 10), 2).getValues();
+    const res = { ...defaultTunjangan };
+
+    values.forEach(r => {
+      const name = String(r[0] || "").toLowerCase();
+      let num = typeof r[1] === "number" ? r[1] : Number(String(r[1] || "").replace(/[^0-9]/g, "")) || 0;
+      if (num > 0) {
+        if (name.indexOf("transport") !== -1 || name.indexOf("kehadiran") !== -1) {
+          res.transport = num;
+        } else if (name.indexOf("wali") !== -1) {
+          res.wali = num;
+        } else if (name.indexOf("kesehatan") !== -1) {
+          res.kesehatan = num;
+        }
+      }
+    });
+
+    return res;
+  } catch(e) {
+    return defaultTunjangan;
+  }
+}
+
+/**
+ * Menghitung nominal honor kegiatan Ujian secara otomatis
+ * berdasarkan jenis kegiatan, volume, tarif di sheet 'Tarif', dan status potongan 25% di Master_Gaji
+ */
+function hitungNominalUjian(kategori, volume, kodeGuru, namaGuru) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tarifMap = getTarifUjianMap(ss);
+
+  const rawCat = String(kategori || "").trim().toLowerCase().replace(/[\s\-]+/g, "_");
   let tarif = 0;
-  for (const k in tarifMap) {
-    if (rawCat.indexOf(k) !== -1) {
-      tarif = tarifMap[k];
-      break;
+
+  // 1. Coba pencocokan langsung
+  if (tarifMap[rawCat] !== undefined) {
+    tarif = tarifMap[rawCat];
+  } else {
+    // 2. Pencocokan cerdas berdasarkan kata kunci
+    for (const k in tarifMap) {
+      if (rawCat.indexOf(k) !== -1 || k.indexOf(rawCat) !== -1) {
+        tarif = tarifMap[k];
+        break;
+      }
+    }
+    // 3. Fallback variasi kata umum bahasa Indonesia
+    if (tarif === 0) {
+      if (rawCat.indexOf("tulis") !== -1 || rawCat.indexOf("soal") !== -1 || rawCat.indexOf("menulis") !== -1) {
+        tarif = tarifMap["tulis_soal"] || 20000;
+      } else if (rawCat.indexOf("awas") !== -1 || rawCat.indexOf("mengawas") !== -1) {
+        tarif = tarifMap["mengawas"] || 10000;
+      } else if (rawCat.indexOf("periksa") !== -1) {
+        tarif = tarifMap["periksa"] || 5000;
+      } else if (rawCat.indexOf("praktik") !== -1 || rawCat.indexOf("praktek") !== -1) {
+        tarif = tarifMap["praktik"] || 10000;
+      } else if (rawCat.indexOf("rapor") !== -1 || rawCat.indexOf("raport") !== -1) {
+        tarif = tarifMap["rapor"] || 30000;
+      }
     }
   }
 
@@ -488,7 +732,6 @@ function hitungNominalUjian(kategori, volume, kodeGuru, namaGuru) {
   // Cek apakah guru ini dikenakan potongan 25% dari sheet Master_Gaji
   let isDipotong = false;
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sMasterGaji = ss.getSheetByName("Master_Gaji");
     if (sMasterGaji && sMasterGaji.getLastRow() >= 2) {
       const lastRow = sMasterGaji.getLastRow();
@@ -507,7 +750,6 @@ function hitungNominalUjian(kategori, volume, kodeGuru, namaGuru) {
                       (targetName && (rowName === targetName || rowName.indexOf(targetName) !== -1 || targetName.indexOf(rowName) !== -1));
 
         if (match) {
-          // Kolom 17 (indeks 16) adalah 'Potongan Ujian 25%'
           const potongVal = String(dataGaji[i][16] || "").trim().toLowerCase();
           if (potongVal === "ya" || potongVal === "true" || potongVal === "1" || potongVal === "y") {
             isDipotong = true;
@@ -694,10 +936,11 @@ function initSpreadsheet() {
   sMaster.getRange(2, 7, defaultClasses.length, 1).setValues(defaultClasses);
   sMaster.getRange("I2").setValue(DEFAULT_ADMIN_PASS);
 
-  // Buat juga Sheet Slip Gaji & Master Gaji otomatis
+  // Buat Sheet Tarif, Slip Gaji & Master Gaji otomatis
+  setupSheetTarif(ss);
   setupSlipGaji();
 
-  Logger.log("✅ Inisialisasi Spreadsheet Berhasil! Sheet KBM, Ujian, Master, Master_Gaji, dan Slip_Gaji siap digunakan.");
+  Logger.log("✅ Inisialisasi Spreadsheet Berhasil! Sheet KBM, Ujian, Master, Master_Gaji, Slip_Gaji, dan Tarif siap digunakan.");
 }
 
 /**
@@ -710,6 +953,9 @@ function initSpreadsheet() {
 function setupSlipGaji() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
+  // Pastikan sheet Tarif tersedia
+  setupSheetTarif(ss);
+
   // 1. Siapkan Sheet Master_Gaji
   let sMasterGaji = ss.getSheetByName("Master_Gaji");
   if (!sMasterGaji) {
@@ -859,17 +1105,16 @@ function setupSlipGaji() {
         setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
       }
 
-      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis 100.000 jika Jabatan (Kolom C) mengandung "wali kelas" & 0 jika bukan atau Sertifikasi = "Ya"
-      const waliNominal = (rawWali > 0 && rawWali !== 100000) ? rawWali : 100000;
-      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); ' + waliNominal + '; 0))';
+      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis membaca dari Tarif!H3 (atau 100.000) jika Jabatan mengandung "wali kelas" & 0 jika Sertifikasi = "Ya"
+      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); IFERROR(Tarif!$H$3; 100000); 0))';
       setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
 
-      // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * 7500 & 0 jika Sertifikasi = "Ya"
-      const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * 7500))';
+      // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * Tarif!H2 (atau 7500) & 0 jika Sertifikasi = "Ya"
+      const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * IFERROR(Tarif!$H$2; 7500)))';
       setSafeFormula(sMasterGaji.getRange(r, 9), formulaKonsumsi);
 
-      // 4. Tunjangan Kesehatan (Kolom J): otomatis 0 jika Sertifikasi = "Ya", 50.000 jika "Tidak"
-      const formulaKesehatan = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; 50000)';
+      // 4. Tunjangan Kesehatan (Kolom J): otomatis Tarif!H4 (atau 50.000) & 0 jika Sertifikasi = "Ya"
+      const formulaKesehatan = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IFERROR(Tarif!$H$4; 50000))';
       setSafeFormula(sMasterGaji.getRange(r, 10), formulaKesehatan);
     }
 
@@ -1000,8 +1245,8 @@ function setupSlipGaji() {
 
   const penerimaanItems = [
     [11, "1", "GAJI POKOK", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); 0; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; 0; IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 6; 0); IFERROR(VLOOKUP(IF($M$5<>"";$M$5;$N$5); Master_Gaji!$A:$R; 6; 0); 0))))'],
-    [12, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*12000; IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*12000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*12000; "-"))))'],
-    [13, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*10000; IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*10000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*10000; "-"))))'],
+    [12, "2", "INSENTIF MENGAJAR KE-1 (Rp.12.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*IFERROR(Tarif!$E$2; 12000); IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*IFERROR(Tarif!$E$2; 12000); IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*IFERROR(Tarif!$E$2; 12000); "-"))))'],
+    [13, "3", "INSENTIF MENGAJAR KE-2 (Rp.10.000/JAM)", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*IFERROR(Tarif!$E$3; 10000); IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*IFERROR(Tarif!$E$3; 10000); IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*IFERROR(Tarif!$E$3; 10000); "-"))))'],
     [14, "4", "TUNJANGAN JABATAN", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 7; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 7; 0)); "-"))'],
     [15, "5", "TUNJANGAN WALI KELAS", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 8; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 8; 0)); "-")))'],
     [16, "6", "TUNJANGAN KONSUMSI + TRANSPORT", '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF(UPPER(IFERROR(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 16; 0); ""))="YA"; "-"; IFERROR(IF(VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 9; 0)=0; "-"; VLOOKUP(RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Master_Gaji!$A:$R; 9; 0)); "-")))'],
@@ -1017,6 +1262,10 @@ function setupSlipGaji() {
     setSafeFormula(safeMerge(sSlip.getRange(row, 12, 1, 3)), item[3]);
     sSlip.getRange(row, 12, 1, 3).setHorizontalAlignment("right").setNumberFormat("#,##0").setBorder(true, true, true, false, false, false);
   });
+
+  // Set label dinamis untuk KBM 1 & KBM 2 agar teks 'Rp.12.000' ikut berubah jika sel di sheet Tarif diubah
+  setSafeFormula(sSlip.getRange("D12"), '="INSENTIF MENGAJAR KE-1 (Rp." & TEXT(IFERROR(Tarif!$E$2; 12000); "#,##0") & "/JAM)"');
+  setSafeFormula(sSlip.getRange("D13"), '="INSENTIF MENGAJAR KE-2 (Rp." & TEXT(IFERROR(Tarif!$E$3; 10000); "#,##0") & "/JAM)"');
 
   // --- ROW 20: TOTAL PENGHASILAN ---
   safeMerge(sSlip.getRange("I20:J20")).setValue("TOTAL PENGHASILAN").setFontWeight("bold").setHorizontalAlignment("center").setBorder(true, true, true, true, false, false);
@@ -1273,6 +1522,10 @@ function urutkanUlangKodeGuru() {
  */
 function sinkronkanMasterGaji(codeMapping) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Pastikan sheet Tarif tersedia
+  setupSheetTarif(ss);
+
   let sMasterGaji = ss.getSheetByName("Master_Gaji");
   if (!sMasterGaji) return;
 
@@ -1397,15 +1650,16 @@ function sinkronkanMasterGaji(codeMapping) {
         const formulaGajiPokok = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(O' + r + '=""; 0; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=12; 500000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=9; 450000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=7; 400000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=5; 375000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=3; 300000; IF(DATEDIF(O' + r + '; TODAY(); "Y")>=2; 150000; 0))))))))';
         setSafeFormula(sMasterGaji.getRange(r, 6), formulaGajiPokok);
       }
-      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis 100.000 jika Jabatan (Kolom C) mengandung "wali kelas" & 0 jika bukan atau Sertifikasi = "Ya"
-      const waliNominal = (rawWali > 0 && rawWali !== 100000) ? rawWali : 100000;
-      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); ' + waliNominal + '; 0))';
+      // 2. Tunjangan Wali Kelas (Kolom H): Otomatis membaca dari Tarif!H3 (atau 100.000) jika Jabatan mengandung "wali kelas" & 0 jika Sertifikasi = "Ya"
+      const formulaWali = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(ISNUMBER(SEARCH("wali kelas"; LOWER(C' + r + '))); IFERROR(Tarif!$H$3; 100000); 0))';
       setSafeFormula(sMasterGaji.getRange(r, 8), formulaWali);
-      // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * 7500 & 0 jika Sertifikasi = "Ya"
-      const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * 7500))';
+
+      // 3. Tunjangan Konsumsi Transport (Kolom I): otomatis Kehadiran (Kolom R) * Tarif!H2 (atau 7500) & 0 jika Sertifikasi = "Ya"
+      const formulaKonsumsi = '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IF(R' + r + '=""; 0; R' + r + ' * IFERROR(Tarif!$H$2; 7500)))';
       setSafeFormula(sMasterGaji.getRange(r, 9), formulaKonsumsi);
 
-      setSafeFormula(sMasterGaji.getRange(r, 10), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; 50000)');
+      // 4. Tunjangan Kesehatan (Kolom J): otomatis Tarif!H4 (atau 50.000) & 0 jika Sertifikasi = "Ya"
+      setSafeFormula(sMasterGaji.getRange(r, 10), '=IF(UPPER(TRIM(P' + r + '))="YA"; 0; IFERROR(Tarif!$H$4; 50000))');
     }
 
     try {
@@ -1424,12 +1678,14 @@ function sinkronkanMasterGaji(codeMapping) {
   // Perbarui formula penting di Slip_Gaji secara aman TANPA merusak layout / format cetak yang sudah dirapikan pengguna
   const sSlip = ss.getSheetByName("Slip_Gaji");
   if (sSlip) {
-    const fKBM1 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*12000; IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*12000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*12000; "-"))))';
-    const fKBM2 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*10000; IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*10000; IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*10000; "-"))))';
+    const fKBM1 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$J:$J) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$J:$J))*IFERROR(Tarif!$E$2; 12000); IF(SUMIF(KBM!$E:$E; D5; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; D5; KBM!$J:$J)*IFERROR(Tarif!$E$2; 12000); IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$J:$J)*IFERROR(Tarif!$E$2; 12000); "-"))))';
+    const fKBM2 = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))>0; (SUMIF(KBM!$D:$D; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); KBM!$K:$K) + SUMIF(KBM!$D:$D; VALUE(IF($M$5<>"";$M$5;$N$5)); KBM!$K:$K))*IFERROR(Tarif!$E$3; 10000); IF(SUMIF(KBM!$E:$E; D5; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; D5; KBM!$K:$K)*IFERROR(Tarif!$E$3; 10000); IF(SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)>0; SUMIF(KBM!$E:$E; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; KBM!$K:$K)*IFERROR(Tarif!$E$3; 10000); "-"))))';
     const fUjian = '=IF(OR(IF($M$5<>"";$M$5;$N$5)=""; IF($M$5<>"";$M$5;$N$5)=0); "-"; IF((SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H))>0; (SUMIF(Ujian!$C:$C; RIGHT("0"&IF($M$5<>"";$M$5;$N$5); 2); Ujian!$H:$H) + SUMIF(Ujian!$C:$C; VALUE(IF($M$5<>"";$M$5;$N$5)); Ujian!$H:$H)); IF(SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; D5; Ujian!$H:$H); IF(SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H)>0; SUMIF(Ujian!$D:$D; "*"&TRIM(LEFT(SUBSTITUTE(SUBSTITUTE(D5; ","; " "); "."; " "); 8))&"*"; Ujian!$H:$H); "-"))))';
 
     setSafeFormula(sSlip.getRange("L12"), fKBM1);
     setSafeFormula(sSlip.getRange("L13"), fKBM2);
+    setSafeFormula(sSlip.getRange("D12"), '="INSENTIF MENGAJAR KE-1 (Rp." & TEXT(IFERROR(Tarif!$E$2; 12000); "#,##0") & "/JAM)"');
+    setSafeFormula(sSlip.getRange("D13"), '="INSENTIF MENGAJAR KE-2 (Rp." & TEXT(IFERROR(Tarif!$E$3; 10000); "#,##0") & "/JAM)"');
     setSafeFormula(sSlip.getRange("L18"), fUjian);
     setSafeFormula(sSlip.getRange("L20"), '=IF(SUMIF(L11:L18; ">0")=0; 0; SUMIF(L11:L18; ">0"))');
     setSafeFormula(sSlip.getRange("L28"), '=IF(SUMIF(L23:L26; ">0")=0; "-"; SUMIF(L23:L26; ">0"))');
@@ -1525,8 +1781,11 @@ function sinkronkanSheetUjian(ss, teacherList, codeMapping) {
       nomNum = Number(rawNom) || 0;
     }
 
-    if (nomNum === 0 && row[4]) {
-      nomNum = hitungNominalUjian(row[4], row[6] || 1, matchedCode, matchedName);
+    if (row[4]) {
+      const autoNom = hitungNominalUjian(row[4], row[6] || 1, matchedCode, matchedName);
+      if (autoNom > 0) {
+        nomNum = autoNom;
+      }
     }
 
     newNominals.push([nomNum]);
@@ -1801,6 +2060,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("📋 SiRekap")
     .addItem("🖨️ Inisialisasi Ulang Desain Slip Gaji (Reset Layout)", "setupSlipGaji")
+    .addItem("⚙️ Siapkan Sheet Tarif (Tabel Pengaturan)", "setupSheetTarif")
     .addItem("🔢 Urutkan Ulang Nomor Kode Guru (Otomatis)", "urutkanUlangKodeGuru")
     .addItem("📥 Tarik Kehadiran dari Sheet Presensi", "tarikKehadiranPresensi")
     .addItem("🔄 Perbarui Rumus Slip Gaji & Sinkronkan Ujian", "sinkronkanMasterGaji")
