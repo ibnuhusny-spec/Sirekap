@@ -140,10 +140,72 @@ function doPost(e) {
       return responseJSON(deleteData(p));
     }
 
+    // 7. Sinkronisasi Otomatis dari Aplikasi Presensi RFID
+    if (action === "sync_presensi_rfid") {
+      return responseJSON(syncPresensiFromRFID(p));
+    }
+
     return responseJSON({ result: "error", message: "Aksi POST tidak dikenali: " + action });
   } catch (err) {
     return responseJSON({ result: "error", message: err.toString() });
   }
+}
+
+/**
+ * Menerima sinkronisasi data presensi langsung dari Aplikasi Presensi RFID
+ * Menulis ke sheet Presensi, mengupdate Master_Gaji dan menghitung total honor di Slip_Gaji secara otomatis
+ */
+function syncPresensiFromRFID(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sPresensi = ss.getSheetByName("Presensi");
+  if (!sPresensi) {
+    sPresensi = ss.insertSheet("Presensi");
+  }
+
+  let guruList = [];
+  try {
+    guruList = JSON.parse(p.guru_data || "[]");
+  } catch(e) {
+    return { result: "error", message: "Format JSON guru_data tidak valid." };
+  }
+
+  if (guruList.length === 0) {
+    return { result: "error", message: "Data presensi guru kosong." };
+  }
+
+  const periode = p.periode || ("Bulan " + Utilities.formatDate(new Date(), "Asia/Makassar", "MMMM yyyy"));
+
+  // Tulis ulang / perbarui sheet Presensi dengan format yang bersih & rapi
+  sPresensi.clear();
+  const header = ["No", "Nama Guru / Pegawai", "Jumlah Kehadiran (Hari)", "Jabatan / Kelas", "Periode", "Waktu Sinkron"];
+  sPresensi.getRange(1, 1, 1, header.length).setValues([header]);
+  sPresensi.getRange(1, 1, 1, header.length).setBackground("#0284c7").setFontColor("#ffffff").setFontWeight("bold");
+  sPresensi.setFrozenRows(1);
+
+  const nowStr = Utilities.formatDate(new Date(), "Asia/Makassar", "yyyy-MM-dd HH:mm:ss");
+  const rows = guruList.map((g, idx) => {
+    return [
+      idx + 1,
+      g.nama || "",
+      Number(g.hadir) || 0,
+      g.kelas || g.jabatan || "Guru",
+      periode,
+      nowStr
+    ];
+  });
+
+  sPresensi.getRange(2, 1, rows.length, header.length).setValues(rows);
+  sPresensi.getRange(2, 3, rows.length, 1).setNumberFormat("#,##0").setHorizontalAlignment("center");
+  sPresensi.autoResizeColumns(1, header.length);
+
+  // Tarik langsung kehadiran ke Master_Gaji & perbarui seluruh rumus Slip Gaji
+  tarikKehadiranPresensi();
+
+  return {
+    result: "success",
+    count: rows.length,
+    message: "Berhasil menyinkronkan " + rows.length + " data kehadiran guru dari Presensi RFID ke SiRekap!"
+  };
 }
 
 // =========================================================================
