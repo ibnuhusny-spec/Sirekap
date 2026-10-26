@@ -1026,7 +1026,36 @@
         let SHEET_URL = localStorage.getItem('sirekap_custom_sheet_url') || "";
         
         const ADMIN_PASS = "admin123";
-        let MASTER = { guru: [], mapel: [], kelas: [] };
+        const DEFAULT_TEACHERS = [
+            "01 Radiant Fadli, S.Pd.", "02 Bahtiar, S.Pd.I.", "03 Agung Setiabudi, S.Pd., Gr.",
+            "04 Fandhy Ahmad Klana, S.S., Gr.", "05 Muhammad Ihsan", "06 Turmisi",
+            "07 Wahyu Saputra", "08 Syamsir, S.Pd., Gr.", "09 Ahmad Prisatrialdi, S.Pd., Gr.",
+            "10 Syahrul Ramadhan, S.H.", "11 Muh. Sofyan Asnur, S.Pd., Gr.", "12 Muhammad Fikri Haekal",
+            "13 Munadil Amri", "14 Fuad", "16 Dra. Mardia Habe", "17 Hj. Nur Apni, S.Pd., Gr.",
+            "18 Hj. Amalia Ahsan, S.Pd., Gr.", "19 Dewi Syahara Nur, S.Pd., Gr.", "20 Ina Mulyati Salam, S.T.",
+            "21 Humairah Nafisah, S.Pd., Gr.", "22 Fitriani, S.Pd.", "23 Satriani",
+            "24 Nur Wahidah", "25 Muti'ah S.", "26 Liza Fany Adella, S.Pd., Gr.", "27 Darmawati, S.Pd., Gr.",
+            "28 Ilma Nurtami, S.Pd., Gr.", "29 A. Nurdiyawanti, S.Pd., M.Pd., Gr.", "30 Rahmawati Basri, S.Pd., Gr.",
+            "31 Sri Wahyuni, S.Pd., Gr.", "32 Ihwana, S.Pd., Gr.", "33 Surianti",
+            "34 Hajriani", "35 Nur Rizky", "38 Hebrianti, S.Pd., M.Si.", "39 Rahmawati",
+            "40 Dhea Rahmiyanti, S.Pd."
+        ];
+        const DEFAULT_SUBJECTS = [
+            "Al-Qur'an", "Aqidah Akhlak", "Bahasa Arab", "Bahasa Bugis", "Bahasa Indonesia",
+            "Bahasa Inggris", "Calistung", "Doa", "Fiqhi", "Hadis", "Hafalan Al-Qur'an",
+            "IPAS", "Ilmu Tajwid", "Matematika", "PJOK", "Pend. Pancasila", "Praktik Salat",
+            "Seni", "Sirah SKI"
+        ];
+        const DEFAULT_CLASSES = [
+            "1A Putra", "1A Putri", "1B Putra", "1B Putri",
+            "2A Putra", "2A Putri", "2B Putra", "2B Putri",
+            "3A Putra", "3A Putri", "3B Putra", "3B Putri",
+            "4 Putri", "4A Putra", "4B Putra",
+            "5 Putri", "5A Putra", "5B Putri",
+            "6 Putra", "6 Putri"
+        ];
+
+        let MASTER = { guru: DEFAULT_TEACHERS, mapel: DEFAULT_SUBJECTS, kelas: DEFAULT_CLASSES };
         let TARIF = JSON.parse(localStorage.getItem('sirekap_tarif') || 'null');
         let currentMasterType = 'guru';
         let currentEditIndex = -1;
@@ -1052,11 +1081,18 @@
             const greetingEl = document.getElementById('dialogue-greeting-text');
             if (greetingEl) greetingEl.textContent = getGreeting();
 
+            // Load master cache jika ada
             const savedM = localStorage.getItem('sirekap_master');
             if(savedM) {
-                MASTER = JSON.parse(savedM);
-                renderDialogueTeacherList();
+                try {
+                    const parsed = JSON.parse(savedM);
+                    if(parsed.guru && parsed.guru.length) MASTER.guru = parsed.guru;
+                    if(parsed.mapel && parsed.mapel.length) MASTER.mapel = parsed.mapel;
+                    if(parsed.kelas && parsed.kelas.length) MASTER.kelas = parsed.kelas;
+                } catch(e) {}
             }
+            // Langsung tampilkan daftar guru tanpa menunggu loading
+            renderDialogueTeacherList();
             updateUjianDropdown();
             
             if(API_URL !== "ISI_DENGAN_LINK_APPS_SCRIPT_ANDA_DISINI") { 
